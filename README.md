@@ -181,15 +181,8 @@ Also backups are designed to be performed only on prod instances, backups can ho
 
 * Bank : some variables may be defined to deploy [woob](https://woob.tech/) on the server together with configuration of bank accounts. This would allow to web scrap your bank website to collect daily bank statements that can then be automatically imported in Odoo prod instance.
 
-<<<<<<< HEAD
+
 * Backups (for backups to be deployed, host needs to be in maintenance_contract group) : the backups make use of [Tecnativa Duplicity Docker](https://github.com/Tecnativa/docker-duplicity)
-=======
-<<<<<<< HEAD
-* Backups (for backups to be deployed, host needs to be in maintenance_contract group) : the backups make use of Tecnativa d
-=======
-* Backups (for backups to be deployed, host needs to be in maintenance_contract group) : the backups make use of [Tecnativa Duplicity Docker](https://github.com/Tecnativa/docker-duplicity)
->>>>>>> Add references
->>>>>>> github
   * swift parameters for 2 object storage instances where backups should be pushed daily
   * odoo_backup_pass : Passphrase for encryption of backups
 
