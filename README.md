@@ -11,6 +11,11 @@ with the following workflow :
 3. Once confirmed OK, copy test image in prod image and restart prod instance on this new image
 4. Use prod image on production instance
 
+This role is originally derivated from the work done by [Tecnativa/Doodba](https://github.com/Tecnativa/doodba) for creating a generic Odoo Docker, although it has been reworked lately in order to reduce drastically the size of the Docker image used, since using Tecnativa Doodba, we were reaching 1.5 GB for the image, when the new images are around 800 MB.
+
+This role is taking advantage of [Le Filament Odoo Docker](https://hub.docker.com/repository/docker/lefilament/odoo) which is also described on corresponding [Le Filament GitHub page](https://github.com/lefilament/odoo_docker) and adds on top additional OCA modules and private modules defined with variables *odoo_custom_modules_oca* and *odoo_custom_modules* (see below)
+
+
 Requirements
 ------------
 
@@ -165,18 +170,18 @@ Also backups are designed to be performed only on prod instances, backups can ho
   * other_repos : this allows to retrieve modules from a git repository (each repository is a single module)
   * other_modules : this allows to retrieve named modules from git repositories (each repo containing multiple modules)
 
-* Internet Access : by default, the dockers deployed by this role do not have access to Internet (meaning they will not be able to communicate towards the Internet, nor be accessible from the Internet). This is done by creating only internal networks. The following variables allow to either deactivate this isolation, or to whitelists URL that would be accessible from the Odoo Docker instance :
+* Internet Access : by default, the dockers deployed by this role do not have access to Internet (meaning they will not be able to communicate towards the Internet, nor be accessible from the Internet). This is done by creating only internal networks. The following variables allow to either deactivate this isolation, or to whitelists URL that would be accessible from the Odoo Docker instance using [Tecnativa Whitelist Docker](https://github.com/Tecnativa/docker-whitelist) :
   * restrict_internet_access : by setting this variable to true, all deployed Docker will be allowed to initiate connections towards the Internet
   * whitelisted_urls : this list may contain URLs that would be accessible from prod and nonprod Odoo instances
   * extra_urls defined in either odoo_prod or any odoo_nonprod_instances may contain URLs that would be accessible only from the instance in which it is defined (as an example, with this variable you would be able to allow access to some API only for prod instance)
 
-* Mail server : by default, nonprod instances are not allowed to communicate towards mail server and are connected to a mailhog instance allowing to check what e-mails would have been sent out. This would allow again to have only prod instance being able to send e-mails to partners. The following variables can be used to authorize access to mail server (SMTP/IMAP) and to configure local postfix relay (this way you would not need to configure e-mail server credentials in Odoo database) :
+* Mail server : by default, nonprod instances are not allowed to communicate towards mail server and are connected to a [mailhog]() instance allowing to check what e-mails would have been sent out. This would allow again to have only prod instance being able to send e-mails to partners. The following variables can be used to authorize access to mail server (SMTP/IMAP) and to configure local postfix relay (this way you would not need to configure e-mail server credentials in Odoo database) :
   * mailname : if defined (together with the mailserver and smtp** variables) a postfix local relay will be deployed and used by prod instance only. If not defined, a mailhog instance would be deployed on prod also.
   * imap_mailserver : if defined a whitelist is created to allow connecting to IMAP server on port 993 (see also the previous section related to Internet Access for explaining why these whitelists might be required)
 
-* Bank : some variables may be defined to deploy woob (https://woob.tech/) on the server together with configuration of bank accounts. This would allow to web scrap your bank website to collect daily bank statements that can then be automatically imported in Odoo prod instance.
+* Bank : some variables may be defined to deploy [woob](https://woob.tech/) on the server together with configuration of bank accounts. This would allow to web scrap your bank website to collect daily bank statements that can then be automatically imported in Odoo prod instance.
 
-* Backups (for backups to be deployed, host needs to be in maintenance_contract group)
+* Backups (for backups to be deployed, host needs to be in maintenance_contract group) : the backups make use of [Tecnativa Duplicity Docker](https://github.com/Tecnativa/docker-duplicity)
   * swift parameters for 2 object storage instances where backups should be pushed daily
   * odoo_backup_pass : Passphrase for encryption of backups
 
