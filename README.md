@@ -100,6 +100,11 @@ odoo_prod_example: # To be renamed odoo_prod
     ## (if URLs need to be accessible from both prod and non-prod instances, use whitelisted_urls instead)
     # extra_urls:
     #     - "docs.example.org"
+    ## OTIONAL parameters for deploying another app (for instance a JS app)
+    # extra_app:
+    #     - name: odoo_app
+    #     - image: nginx:latest
+    #     - url: app.example.org
 
 odoo_nonprod_instances_example: # To be renamed odoo_nonprod_instances
     - name: odoo_test
@@ -160,6 +165,11 @@ odoo_nonprod_instances_example: # To be renamed odoo_nonprod_instances
                 - account_bank_statement_import_ofx
       extra_urls:
           - "docs-test.example.org"
+      ## OTIONAL parameters for deploying another app (for instance a JS app)
+      # extra_app:
+      #     - name: odootest_app
+      #     - image: nginx:latest
+      #     - url: app-test.example.org
 ```
 Also backups are designed to be performed only on prod instances, backups can however be restored on every non prod instance.
 
