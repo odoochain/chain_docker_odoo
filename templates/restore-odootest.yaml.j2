@@ -3,10 +3,6 @@ services:
     restore_test:
         image: tecnativa/duplicity:postgres
         hostname: {{ inventory_hostname_short | lower | regex_replace('_','') }}-odoo
-        volumes:
-            - {{ item.dir }}_filestore:/mnt/backup/src/odoo:z
-            - ./post_restore-{{ item.name }}.sql:/tmp/post-restore.sql:ro
-            - ./pre_restore-{{ item.name }}.sql:/tmp/pre-restore.sql:ro
         networks:
             - {{ item.dir }}_default
             - public
@@ -27,6 +23,9 @@ services:
             PASSPHRASE: "{{ odoo_backup_pass | default(odoo_prod.master_pass) }}"
         volumes:
             - backups_odoo_backup_cache:/root/.cache/duplicity/:z
+            - {{ item.dir }}_filestore:/mnt/backup/src/odoo:z
+            - ./post_restore-{{ item.name }}.sql:/tmp/post-restore.sql:ro
+            - ./pre_restore-{{ item.name }}.sql:/tmp/pre-restore.sql:ro
         command: [sh, -c, "psql -a -f /tmp/pre-restore.sql postgres ; echo 'remove existing dir' && rm -rf /mnt/backup/src/odoo/filestore/$$PGDATABASE && restore && echo 'move repo to final dest' && mv /mnt/backup/src/odoo/filestore/{{ odoo_prod.db }} /mnt/backup/src/odoo/filestore/$$PGDATABASE && echo 'create database' && createdb -T template0 $$PGDATABASE && echo 'restore database' && pg_restore -d $$PGDATABASE $$SRC/{{ odoo_prod.db }}.pgdump ; psql -a -f /tmp/post-restore.sql $$PGDATABASE"]
 {% else %}
             DST: "swift://odoo_{{ item.prod_inv_name|lower }}"
