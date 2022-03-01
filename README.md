@@ -99,7 +99,8 @@ odoo_prod_example: # To be renamed odoo_prod
     ## OPTIONAL extra_urls to be accessible from this Odoo intance only
     ## (if URLs need to be accessible from both prod and non-prod instances, use whitelisted_urls instead)
     # extra_urls:
-    #     - "docs.example.org"
+    #     - url: "docs.example.org"
+    #       port: 443
     ## OPTIONAL parameters for deploying another app (for instance a JS app)
     # extra_app:
     #     - name: odoo_app
