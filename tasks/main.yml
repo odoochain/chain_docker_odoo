@@ -112,7 +112,7 @@
 
 - name: NONPROD copy private GitLab ssh keys file
   copy:
-    content: "{{ lf_gitlab_ro_privkey }}"
+    content: "{{ git_modules_privkey | default('') }}"
     dest: "/home/docker/{{ item.dir }}/odoo/id_ed25519.sources"
     owner: root
     group: root
