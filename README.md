@@ -51,6 +51,8 @@ odoo_prod_example: # To be renamed odoo_prod
     db_pass: "odooDbPasswordToBeModified"
     # PROD Database name
     db: "odoo"
+    ## OPTIONAL - use this variable to force using multiprocessing iso multithreading
+    # force_odoo_workers: True
     ## OPTIONAL - only needed if no nonprod_instances are defined
     ## Custom modules Le Filament (one module per repo)
     # custom_modules:
@@ -124,6 +126,8 @@ odoo_nonprod_instances_example: # To be renamed odoo_nonprod_instances
       db: "odoo_test"
       ## Tag that will be used on the built test Docker image
       image_version: "{{ odoo_version }}_test"
+      ## OPTIONAL - use this variable to force using multiprocessing iso multithreading
+      # force_odoo_workers: True
       ## Custom modules Le Filament (one module per repo)
       custom_modules:
           - automatic_bank_statement_import

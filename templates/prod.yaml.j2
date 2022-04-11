@@ -45,7 +45,7 @@ services:
             co.elastic.logs/multiline.negate: 'true'
             co.elastic.logs/multiline.match: "after"
             traefik.enable: "true"
-{% if ansible_processor_vcpus > 2 %}
+{% if ansible_processor_vcpus > 2 or odoo_prod.force_odoo_workers is defined %}
             traefik.http.routers.odoo-longpolling.rule: "Host(`{{ odoo_prod.url }}`{% if odoo_prod.url2 is defined %}, `{{ odoo_prod.url2 }}`{% endif %}) && PathPrefix(`/longpolling/`)"
             traefik.http.routers.odoo-longpolling.service: "odoo-longpolling"
             traefik.http.services.odoo-longpolling.loadbalancer.server.port: "8072"

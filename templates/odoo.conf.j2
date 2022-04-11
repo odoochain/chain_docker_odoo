@@ -49,7 +49,7 @@ smtp_server = smtp
 ; smtp_user = False
 unaccent = True
 without_demo = all
-{% if ansible_processor_vcpus > 2 %}
+{% if ansible_processor_vcpus > 2 or odoo_prod.force_odoo_workers is defined %}
 workers = {{ (ansible_processor_vcpus * 2 - 1) | int | abs }}
 max_cron_threads = {{ ansible_processor_vcpus | int }}
 {% else %}
