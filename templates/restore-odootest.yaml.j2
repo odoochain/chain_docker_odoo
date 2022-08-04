@@ -44,6 +44,8 @@ networks:
 
 volumes:
     backups_odoo_backup_cache:
+{% if odoo_prod is defined %}
         external: true
+{% endif %}
     {{ item.dir }}_filestore:
         external: true
