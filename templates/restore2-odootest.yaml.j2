@@ -1,7 +1,8 @@
 version: "2.1"
 services:
     restore_test:
-        image: tecnativa/duplicity:postgres
+        image: remifilament/duplicity:postgres # Until https://github.com/Tecnativa/docker-duplicity/pull/324 is merged
+        # image: ghcr.io/tecnativa/docker-duplicity-postgres:master # Once https://github.com/Tecnativa/docker-duplicity/pull/324 is merged
         hostname: {{ inventory_hostname_short | lower | regex_replace('_','') }}-odoo
         networks:
             - {{ item.dir }}_default
