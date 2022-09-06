@@ -353,7 +353,7 @@
     dest: "/home/docker/odoo/odoo/id_ed25519.sources"
     owner: root
     group: root
-    mode: '0600'
+    mode: '0400'
   when: odoo_nonprod_instances is not defined and odoo_prod is defined
   notify:
     - build odoo docker prod
@@ -378,7 +378,7 @@
     dest: "/home/docker/odoo/odoo/id_rsa"
     owner: root
     group: root
-    mode: '0600'
+    mode: '0400'
   when: git_private_keys is defined and odoo_nonprod_instances is not defined and odoo_prod is defined
   notify: build odoo docker prod
   tags: odoo_prod
@@ -577,7 +577,7 @@
     dest: "/root/.ssh/id_rsa"
     owner: root
     group: root
-    mode: '0600'
+    mode: '0400'
   when: private_keys is defined and odoo_prod is defined
   tags: odoo_prod
 
