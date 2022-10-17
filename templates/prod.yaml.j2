@@ -97,6 +97,7 @@ services:
             MAIL_CANONICAL_DOMAINS: "{{ mailname }}"
             MAIL_NON_CANONICAL_DEFAULT: "{{ mailname }}"
         restart: unless-stopped
+
 {% if restrict_internet_access %}
 {% if imap_mailserver is defined %}
     email_imap:
@@ -131,6 +132,7 @@ services:
             TARGET: "{{ mailserver }}"
             PRE_RESOLVE: 1
         restart: unless-stopped
+
 {% endif %}
 {% else %}
         image: mailhog/mailhog
@@ -138,10 +140,10 @@ services:
         restart: unless-stopped
         labels:
             co.elastic.logs/enabled: "false"
+
 {% endif %}
 {% if restrict_internet_access and odoo_prod.extra_urls is defined %}
 {% for server in odoo_prod.extra_urls %}
-
     {{ server.url }}:
         image: tecnativa/whitelist
         container_name: odoo_{{ server.url }}
@@ -157,10 +159,10 @@ services:
             TARGET: "{{ server.url }}"
             PRE_RESOLVE: 1
         restart: unless-stopped
+
 {% endfor %}
 {% endif %}
 {% if metabase %}
-
     metabase:
         image: metabase/metabase
         container_name: odoo_metabase
@@ -181,9 +183,9 @@ services:
         restart: unless-stopped
         volumes:
             - metabase:/metabase-data:z
+
 {% endif %}
 {% if odoo_prod.extra_app is defined %}
-
     app:
         image: {{ odoo_prod.extra_app.image }}
         container_name: {{ odoo_prod.extra_app.name }}

@@ -170,11 +170,31 @@ odoo_nonprod_instances_example: # To be renamed odoo_nonprod_instances
                 - account_bank_statement_import_ofx
       extra_urls:
           - "docs-test.example.org"
+
       ## OPTIONAL parameters for deploying another app (for instance a JS app)
       # extra_app:
       #     - name: odootest_app
       #     - image: nginx:latest
       #     - url: app-test.example.org
+
+      ## OPTIONAL - Allow access to Odoo DB from outside world
+      odoo_remote_db_access: false
+
+      ## OPTIONAL - Extra commands to be added in Dockerfile building Odoo image
+      # odoo_specific_dockerfile_commands: []
+      ## OPTIONAL - Extra host to be defined in Odoo docker /etc/hosts for local access and prevent DNS resolution
+      # odoo_extra_host: "docs.example.org:172.17.0.1"
+      ## OPTIONAL - update performance limits for Odoo (see https://www.odoo.com/documentation/14.0/developer/reference/cmdline.html)
+      # odoo_db_maxconn: 64
+      # odoo_limit_time_cpu: 300
+      # odoo_limit_time_real: 600
+      ## OPTIONAL - Extra variables to be added in odoo.conf
+      # odoo_server_wide_modules: "queue_job"
+      # odoo_modules_auto_install_disabled: "stock_sms"
+      # odoo_modules_auto_install_enabled: "mail_tracking"
+      # odoo_extra_conf: "log_level = debug"
+      ## OPTIONAL - update performance limits for Odoo (see https://www.odoo.com/documentation/14.0/developer/reference/cmdline.html)
+      # postgres_options: "-c max_connections=100"
 ```
 Also backups are designed to be performed only on prod instances, backups can however be restored on every non prod instance.
 

@@ -92,9 +92,9 @@ services:
             traefik.http.routers.{{ item.dir }}smtp.rule: "Host(`{{ item.url }}`) && PathPrefix(`/smtp/`)"
             traefik.http.routers.{{ item.dir }}smtp.service: "{{ item.dir }}smtp"
             traefik.http.services.{{ item.dir }}smtp.loadbalancer.server.port: "8025"
+
 {% if restrict_internet_access and item.extra_urls is defined %}
 {% for url in item.extra_urls %}
-
     {{ url }}:
         image: tecnativa/whitelist
         container_name: {{ item.dir }}_{{ url }}
@@ -110,10 +110,10 @@ services:
             TARGET: "{{ url }}"
             PRE_RESOLVE: 1
         restart: unless-stopped
+
 {% endfor %}
 {% endif %}
 {% if item.extra_app is defined %}
-
     app:
         image: {{ item.extra_app.image }}
         container_name: {{ item.extra_app.name }}
@@ -127,6 +127,7 @@ services:
             traefik.http.routers.{{ item.extra_app.name | lower | regex_replace('_','') }}.rule: "Host(`{{ item.extra_app.url }}`)"
             traefik.http.routers.{{ item.extra_app.name | lower | regex_replace('_','') }}.service: "{{ item.extra_app.name | lower | regex_replace('_','') }}"
             traefik.http.services.{{ item.extra_app.name | lower | regex_replace('_','') }}.loadbalancer.server.port: "80"
+
 {% endif %}
 
 networks:
