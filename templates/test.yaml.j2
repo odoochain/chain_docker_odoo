@@ -129,7 +129,6 @@ services:
             traefik.http.services.{{ item.extra_app.name | lower | regex_replace('_','') }}.loadbalancer.server.port: "80"
 
 {% endif %}
-
 networks:
     default:
         internal: true

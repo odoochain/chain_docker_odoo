@@ -199,8 +199,8 @@ services:
             traefik.http.routers.{{ odoo_prod.extra_app.name | lower | regex_replace('_','') }}.rule: "Host(`{{ odoo_prod.extra_app.url }}`)"
             traefik.http.routers.{{ odoo_prod.extra_app.name | lower | regex_replace('_','') }}.service: "{{ odoo_prod.extra_app.name | lower | regex_replace('_','') }}"
             traefik.http.services.{{ odoo_prod.extra_app.name | lower | regex_replace('_','') }}.loadbalancer.server.port: "80"
-{% endif %}
 
+{% endif %}
 networks:
     default:
         internal: true
