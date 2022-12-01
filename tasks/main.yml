@@ -603,20 +603,38 @@
 # --------------------------------------------------
 # Postgres Readonly user
 # --------------------------------------------------
-- name: PROD Allow readonly user connection to prod db
+- name: PROD Allow readonly user connection to prod db (with userns_remap)
+  blockinfile:
+    path: /var/lib/docker/{{ dockremap_subuid }}.{{ dockremap_subgid }}/volumes/odoo_db/_data/pg_hba.conf
+    block: |
+      host {{ odoo_prod.db }} {{ odoo_prod.db_user }} 172.16.0.0/12 md5
+      host postgres {{ odoo_prod.db_user }} 172.16.0.0/12 md5
+      host {{ odoo_prod.db }} {{ odoo_db_rouser }} all md5
+  when: odoo_remote_db_access and odoo_prod is defined and docker_userns_remap
+  tags: odoo_prod
+
+- name: PROD Allow readonly user connection to prod db (no userns_remap)
   blockinfile:
     path: /var/lib/docker/volumes/odoo_db/_data/pg_hba.conf
     block: |
       host {{ odoo_prod.db }} {{ odoo_prod.db_user }} 172.16.0.0/12 md5
       host postgres {{ odoo_prod.db_user }} 172.16.0.0/12 md5
       host {{ odoo_prod.db }} {{ odoo_db_rouser }} all md5
-  when: odoo_remote_db_access and odoo_prod is defined
+  when: odoo_remote_db_access and odoo_prod is defined and not docker_userns_remap
   tags: odoo_prod
 
-- name: PROD Disable access all rights
+- name: PROD Disable access all rights (with userns_remap)
+  lineinfile:
+    name: /var/lib/docker/{{ dockremap_subuid }}.{{ dockremap_subgid }}/volumes/odoo_db/_data/pg_hba.conf
+    regexp: "^host all all all md5"
+    line: "#host all all all md5"
+  when: odoo_remote_db_access and odoo_prod is defined and docker_userns_remap
+  tags: odoo_prod
+
+- name: PROD Disable access all rights (no userns_remap)
   lineinfile:
     name: /var/lib/docker/volumes/odoo_db/_data/pg_hba.conf
     regexp: "^host all all all md5"
     line: "#host all all all md5"
-  when: odoo_remote_db_access and odoo_prod is defined
+  when: odoo_remote_db_access and odoo_prod is defined and not docker_userns_remap
   tags: odoo_prod
