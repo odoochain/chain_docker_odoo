@@ -65,7 +65,7 @@ services:
             POSTGRES_USER: "{{ odoo_prod.db_user }}"
             POSTGRES_PASSWORD: "{{ odoo_prod.db_pass }}"
 {% if postgres_options is defined %}
-            PGOPTIONS: "{{ postgres_options }}"
+        command: {{ postgres_options }}
 {% endif %}
         labels:
             co.elastic.logs/module: postgresql
