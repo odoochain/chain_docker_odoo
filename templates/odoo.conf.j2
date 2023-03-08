@@ -7,7 +7,7 @@ admin_passwd = {{ odoo_prod.master_pass | password_hash('pbkdf2_sha512', 65534 |
 admin_passwd = {{ item.master_pass | password_hash('pbkdf2_sha512', 65534 | random(seed=inventory_hostname) | string) }}
 {% endif %}
 data_dir = /opt/odoo/data
-{% if odoo_version == '12.0' or odoo_version == '14.0' %}
+{% if odoo_version == '12.0' or odoo_version == '14.0' or odoo_version == '16.0' %}
 server_wide_modules = base,web,module_change_auto_install{% if odoo_server_wide_modules is defined %},{{ odoo_server_wide_modules }}{% endif %}
 
 {% endif %}
