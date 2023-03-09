@@ -36,9 +36,9 @@ services:
             co.elastic.logs/enabled: "false"
             traefik.enable: "true"
 {% if ansible_processor_vcpus > 2 or item.force_odoo_workers is defined %}
-            traefik.http.routers.{{ item.dir }}-longpolling.rule: "Host(`{{ item.url }}`) && PathPrefix(`/longpolling/`)"
-            traefik.http.routers.{{ item.dir }}-longpolling.service: "{{ item.dir }}-longpolling"
-            traefik.http.services.{{ item.dir }}-longpolling.loadbalancer.server.port: "8072"
+            traefik.http.routers.{{ item.dir }}-{{ websocket_uri }}.rule: "Host(`{{ item.url }}`) && PathPrefix(`/{{ websocket_uri }}/`)"
+            traefik.http.routers.{{ item.dir }}-{{ websocket_uri }}.service: "{{ item.dir }}-{{ websocket_uri }}"
+            traefik.http.services.{{ item.dir }}-{{ websocket_uri }}.loadbalancer.server.port: "8072"
 {% endif %}
             traefik.http.routers.{{ item.dir }}-restrict.middlewares: "auth@file"
             traefik.http.routers.{{ item.dir }}-restrict.rule: "Host(`{{ item.url }}`) && Path(`/website/info`, `/web/database/{p:manager|create|duplicate|drop|backup|restore|change_password}`)"

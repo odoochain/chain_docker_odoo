@@ -4,7 +4,10 @@
 ## Odoo PostgreSQL version
 odoo_db_version: '13'
 ## Odoo version
-odoo_version: '14.0'
+odoo_version: '16.0'
+
+## Odoo websocket URI (websocket from 16.0 onwards, longpolling before)
+websocket_uri: 'websocket'
 
 ## Custom modules default URL for retrieving custom modules :
 custom_modules_base_url: "https://sources.le-filament.com/lefilament"
