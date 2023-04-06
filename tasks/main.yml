@@ -542,8 +542,8 @@
 - name: PROD add cron job to run backup every day
   cron:
     name: backup odoo
-    minute: "8"
-    hour: "2"
+    minute: "50"
+    hour: "01"
     job: /usr/local/bin/docker-compose -f /home/docker/backups/backup-odoo.yaml run --rm backup_odoo
   when: inventory_hostname in groups.maintenance_contract and odoo_prod is defined
   tags: odoo_prod
@@ -562,8 +562,8 @@
 - name: PROD add cron job to run backup2 every day
   cron:
     name: backup2 odoo
-    minute: "8"
-    hour: "22"
+    minute: "00"
+    hour: "23"
     job: /usr/local/bin/docker-compose -f /home/docker/backups/backup2-odoo.yaml run --rm backup_odoo
   when: inventory_hostname in groups.maintenance_contract and odoo_prod is defined
   tags: odoo_prod
