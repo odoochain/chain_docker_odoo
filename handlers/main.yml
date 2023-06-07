@@ -1,34 +1,34 @@
 ---
-- name: start odoo docker whitelists
+- name: start odoo whitelists
   docker_compose:
     project_src: /home/docker
     files: whitelists.yaml
     project_name: whitelists
 
-- name: pull odoo docker ML image
+- name: pull odoo ML image
   docker_image:
-    name: lefilament/odoo:{{ odoo_version }}_ml
+    name: lefilament/odoo:{{ instance_odoo_version }}_ml
     source: pull
     force_source: true
-  when: odoo_multilingual is defined and odoo_multilingual
+  when: not ansible_check_mode and odoo_multilingual is defined and odoo_multilingual
 
-- name: pull odoo docker Python3.6 image
+- name: pull odoo Python3.6 image
   docker_image:
-    name: lefilament/odoo:{{ odoo_version }}_py3.6
+    name: lefilament/odoo:{{ instance_odoo_version }}_py3.6
     source: pull
     force_source: true
-  when: odoo_python36 is defined and odoo_python36
+  when: not ansible_check_mode and odoo_python36 is defined and odoo_python36
 
-- name: pull odoo docker image
+- name: pull odoo image
   docker_image:
-    name: lefilament/odoo:{{ odoo_version }}
+    name: lefilament/odoo:{{ instance_odoo_version }}
     source: pull
     force_source: true
-  when: (odoo_multilingual is not defined or not odoo_multilingual) and (odoo_python36 is not defined or not odoo_python36)
+  when: not ansible_check_mode and (odoo_multilingual is not defined or not odoo_multilingual) and (odoo_python36 is not defined or not odoo_python36)
 
-- name: build odoo_test docker
+- name: build odoo image
   docker_compose:
-    project_src: /home/docker/odootest/
+    project_src: /home/docker/{{ instance_name }}/
     build: true
     nocache: true
     recreate: always
@@ -38,88 +38,11 @@
   poll: 10
   when: not ansible_check_mode
 
-- name: remove odoo_test ssh private keys
-  file:
-    path: "/home/docker/odootest/odoo/id_ed25519.sources"
-    state: absent
-  when: inventory_hostname not in groups['maintenance_contract']
-
-- name: start odoo_test docker
+- name: start odoo container
   docker_compose:
-    project_src: /home/docker/odootest/
+    project_src: /home/docker/{{ instance_name }}/
     remove_orphans: true
-
-- name: build odoo_dev docker
-  docker_compose:
-    project_src: /home/docker/odoodev/
-    build: true
-    nocache: true
-    recreate: always
-    restarted: true
-    remove_orphans: true
-  async: 600
-  poll: 10
   when: not ansible_check_mode
-
-- name: remove odoo_dev ssh private keys
-  file:
-    path: "/home/docker/odoodev/odoo/id_ed25519.sources"
-    state: absent
-  when: inventory_hostname not in groups['maintenance_contract']
-
-- name: start odoo_dev docker
-  docker_compose:
-    project_src: /home/docker/odoodev/
-    remove_orphans: true
-
-- name: build odoo_preprod docker
-  docker_compose:
-    project_src: /home/docker/odoopreprod/
-    build: true
-    nocache: true
-    recreate: always
-    restarted: true
-    remove_orphans: true
-  async: 600
-  poll: 10
-  when: not ansible_check_mode
-
-- name: remove odoo_preprod ssh private keys
-  file:
-    path: "/home/docker/odoopreprod/odoo/id_ed25519.sources"
-    state: absent
-  when: inventory_hostname not in groups['maintenance_contract']
-
-- name: start odoo_preprod docker
-  docker_compose:
-    project_src: /home/docker/odoopreprod/
-    remove_orphans: true
-
-- name: build odoo docker prod
-  docker_compose:
-    project_src: /home/docker/odoo/
-    build: true
-    nocache: true
-    recreate: always
-    restarted: true
-    remove_orphans: true
-  async: 600
-  poll: 10
-  when: not ansible_check_mode
-
-- name: remove prod ssh private keys
-  copy:
-    content: " "
-    dest: "/home/docker/odoo/odoo/id_ed25519.sources"
-    owner: root
-    group: root
-    mode: '0400'
-  when: inventory_hostname not in groups['maintenance_contract']
-
-- name: start odoo docker prod
-  docker_compose:
-    project_src: /home/docker/odoo/
-    remove_orphans: true
 
 - name: remove intermediate image
   docker_prune:
@@ -127,4 +50,10 @@
     images: true
     images_filters:
       label: stage=builder
-  when: inventory_hostname not in groups['maintenance_contract']
+  when: not ansible_check_mode and inventory_hostname not in groups['maintenance_contract']
+
+- name: remove ssh private keys
+  file:
+    path: "/home/docker/{{ instance_name }}/odoo/id_ed25519.sources"
+    state: absent
+  when: not ansible_check_mode and inventory_hostname not in groups['maintenance_contract']

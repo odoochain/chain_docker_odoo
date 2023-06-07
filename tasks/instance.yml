@@ -1,0 +1,254 @@
+---
+- name: create Odoo docker structure on server in /home/docker/{{ item.key }}
+  file:
+    name: "/home/docker/{{ item.key }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: container building requirements
+  when: (item.value.need_build is not defined and item.value.is_prod is defined and not item.value.is_prod) or (item.value.need_build is defined and item.value.need_build)
+  tags: ['never', 'build_odoo']
+  block:
+    - name: create Odoo docker structure on server in /home/docker/{{ item.key }}/odoo/private
+      file:
+        name: "/home/docker/{{ item.key }}/odoo/private"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: copy update scripts to be run during build
+      template:
+        src: "{{ file }}"
+        dest: "/home/docker/{{ item.key }}/odoo/private/"
+        owner: root
+        group: root
+        mode: '0750'
+      with_items:
+        - fetch_repos
+        - fetch_repos_addons
+      loop_control:
+        loop_var: file
+      notify:
+        - pull odoo ML image
+        - pull odoo Python3.6 image
+        - pull odoo image
+        - build odoo image
+
+    - name: set repos variables from template
+      template:
+        src: "{{ file }}.j2"
+        dest: "/home/docker/{{ item.key }}/odoo/private/{{ file }}"
+        owner: root
+        group: root
+        mode: '0644'
+      with_items:
+        - "repos.yaml"
+        - "repos-addons.yaml"
+      loop_control:
+        loop_var: file
+      notify:
+        - pull odoo ML image
+        - pull odoo Python3.6 image
+        - pull odoo image
+        - build odoo image
+
+    - name: copy odoo.conf file
+      template:
+        src: odoo.conf.j2
+        dest: "/home/docker/{{ item.key }}/odoo/odoo.conf"
+        owner: root
+        group: root
+        mode: '0600'
+      notify: build odoo image
+
+    - name: copy private GitLab ssh keys file
+      copy:
+        content: "{{ git_modules_privkey | default('') }}"
+        dest: "/home/docker/{{ item.key }}/odoo/id_ed25519.sources"
+        owner: root
+        group: root
+        mode: '0400'
+      notify:
+        - build odoo image
+        - remove ssh private keys
+        - remove intermediate image
+
+    - name: copy ssh config for connecting to LF Gitlab
+      copy:
+        src: ssh_config
+        dest: "/home/docker/{{ item.key }}/odoo/ssh_config"
+        owner: root
+        group: root
+        mode: '0444'
+      notify: build odoo image
+
+    - name: copy private Git ssh keys file
+      copy:
+        content: "{{ git_private_keys }}"
+        dest: "/home/docker/{{ item.key }}/odoo/id_rsa"
+        owner: root
+        group: root
+        mode: '0400'
+      when: git_private_keys is defined
+      notify: build odoo image
+
+    - name: copy Dockerfile to retrieve private repos and extra OCA ones
+      template:
+        src: Dockerfile.j2
+        dest: "/home/docker/{{ item.key }}/odoo/Dockerfile"
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - pull odoo ML image
+        - pull odoo Python3.6 image
+        - pull odoo image
+        - build odoo image
+
+- name: PROD set image
+  when: item.value.is_prod is defined and item.value.is_prod and item.value.from_instance is defined
+  block:
+    - name: PROD check if prod image exists
+      docker_image_info:
+        name: "filament/{{ item.key }}:{{ instance_odoo_setup.odoo_version }}"
+      register: prod_image
+
+    - name: PROD copy test image to prod if it does not exist
+      docker_image:
+        name: "filament/{{ item.value.from_instance }}:{{ instance_odoo_setup.odoo_version }}"
+        repository: "filament/{{ item.key }}:{{ instance_odoo_setup.odoo_version }}"
+        source: local
+      when: prod_image.images | length == 0
+
+- name: copy prod docker compose service
+  template:
+    src: prod.yaml.j2
+    dest: "/home/docker/{{ item.key }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: '0400'
+  when: item.value.is_prod is defined and item.value.is_prod
+  notify: start odoo container
+
+- name: copy test docker-compose service
+  template:
+    src: test.yaml.j2
+    dest: "/home/docker/{{ item.key }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: '0400'
+  when: item.value.is_prod is undefined or not item.value.is_prod
+  notify: start odoo container
+
+# --------------------------------------------------
+# non-prod restore section
+# --------------------------------------------------
+- name: non-prod restore
+  when: (item.value.is_prod is undefined or not item.value.is_prod) and inventory_hostname in groups.maintenance_contract
+  tags: 'backup_odoo'
+  block:
+    - name: NONPROD copy sql script to be run before restoring db from prod
+      template:
+        src: pre_restore-odootest.sql.j2
+        dest: "/home/docker/backups/pre_restore-{{ item.key }}.sql"
+        owner: root
+        group: root
+        mode: '0444'
+
+    - name: NONPROD copy sql script to be run after restoring db from prod
+      template:
+        src: post_restore-odootest.sql.j2
+        dest: "/home/docker/backups/post_restore-{{ item.key }}.sql"
+        owner: root
+        group: root
+        mode: '0444'
+
+    - name: NONPROD copy compose file to restore db from prod
+      template:
+        src: restore-odootest.yaml.j2
+        dest: "/home/docker/backups/restore-{{ item.key }}{{ account.key }}.yaml"
+        owner: root
+        group: root
+        mode: '0400'
+      with_dict: "{{ swift_accounts }}"
+      loop_control:
+        label: "{{ account.key }}"
+        loop_var: account
+
+# --------------------------------------------------
+# prod backup section
+# --------------------------------------------------
+- name: prod backup
+  when: item.value.is_prod is defined and item.value.is_prod and inventory_hostname in groups.maintenance_contract
+  tags: 'backup_odoo'
+  block:
+    - name: PROD copy docker compose for backups
+      template:
+        src: backup.yaml.j2
+        dest: "/home/docker/backups/backup-{{ item.key }}{{ account.key }}.yaml"
+        owner: root
+        group: root
+        mode: '0400'
+      with_dict: "{{ swift_accounts }}"
+      loop_control:
+        label: "{{ account.key }}"
+        loop_var: account
+
+    - name: PROD add cron job to run backup every day
+      cron:
+        name: "backup {{ item.key}}"
+        minute: "50"
+        hour: "01"
+        job: /usr/local/bin/docker-compose -f /home/docker/backups/backup-{{ item.key }}1.yaml run --rm backup_odoo
+
+    - name: PROD add cron job to run backup2 every day
+      cron:
+        name: "backup2 {{ item.key}}"
+        minute: "00"
+        hour: "23"
+        job: /usr/local/bin/docker-compose -f /home/docker/backups/backup-{{ item.key }}2.yaml run --rm backup_odoo
+
+# --------------------------------------------------
+# Remote imports section
+# --------------------------------------------------
+- name: prod import
+  when: item.value.is_prod is defined and item.value.is_prod and inventory_hostname in groups.maintenance_contract
+  block:
+    - name: PROD Push private keys for any external tool connection
+      copy:
+        content: "{{ private_keys }}"
+        dest: "/root/.ssh/id_rsa"
+        owner: root
+        group: root
+        mode: '0400'
+      when: private_keys is defined
+
+    - name: PROD Copy script file for collecting remote files
+      template:
+        src: pull_remote_files.sh.j2
+        dest: /root/pull_remote_files.sh
+        owner: root
+        group: root
+        mode: '0700'
+      when: private_pull is defined
+
+    - name: PROD add cron job to pull files from remote server
+      cron:
+        name: pull remote server files
+        minute: "30"
+        hour: "23"
+        job: /root/pull_remote_files.sh
+      when: private_pull is defined
+
+# Flush handlers.
+- name: set facts
+  ansible.builtin.set_fact:
+    instance_name: "{{ item.key }}"
+    instance_odoo_version: "{{ instance_odoo_setup.odoo_version }}"
+    cacheable: no
+
+- name: Flush handlers
+  meta: flush_handlers
