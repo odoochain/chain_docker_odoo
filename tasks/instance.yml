@@ -246,7 +246,7 @@
 # Flush handlers.
 - name: set facts
   ansible.builtin.set_fact:
-    instance_name: "{{ item.key }}"
+    instance: "{{ {'key': item.key, 'value': item.value} }}"
     instance_odoo_version: "{{ instance_odoo_setup.odoo_version }}"
     cacheable: no
 

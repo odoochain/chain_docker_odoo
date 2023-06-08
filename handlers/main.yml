@@ -10,25 +10,25 @@
     name: lefilament/odoo:{{ instance_odoo_version }}_ml
     source: pull
     force_source: true
-  when: not ansible_check_mode and odoo_multilingual is defined and odoo_multilingual
+  when: not ansible_check_mode and instance.value.odoo_multilingual is defined and instance.value.odoo_multilingual
 
 - name: pull odoo Python3.6 image
   docker_image:
     name: lefilament/odoo:{{ instance_odoo_version }}_py3.6
     source: pull
     force_source: true
-  when: not ansible_check_mode and odoo_python36 is defined and odoo_python36
+  when: not ansible_check_mode and instance.value.odoo_python36 is defined and instance.value.odoo_python36
 
 - name: pull odoo image
   docker_image:
     name: lefilament/odoo:{{ instance_odoo_version }}
     source: pull
     force_source: true
-  when: not ansible_check_mode and (odoo_multilingual is not defined or not odoo_multilingual) and (odoo_python36 is not defined or not odoo_python36)
+  when: not ansible_check_mode and (instance.value.odoo_multilingual is not defined or not instance.value.odoo_multilingual) and (instance.value.odoo_python36 is not defined or not instance.value.odoo_python36)
 
 - name: build odoo image
   docker_compose:
-    project_src: /home/docker/{{ instance_name }}/
+    project_src: /home/docker/{{ instance.key }}/
     build: true
     nocache: true
     recreate: always
@@ -40,7 +40,7 @@
 
 - name: start odoo container
   docker_compose:
-    project_src: /home/docker/{{ instance_name }}/
+    project_src: /home/docker/{{ instance.key }}/
     remove_orphans: true
   when: not ansible_check_mode
 
@@ -54,6 +54,6 @@
 
 - name: remove ssh private keys
   file:
-    path: "/home/docker/{{ instance_name }}/odoo/id_ed25519.sources"
+    path: "/home/docker/{{ instance.key }}/odoo/id_ed25519.sources"
     state: absent
   when: not ansible_check_mode and inventory_hostname not in groups['maintenance_contract']

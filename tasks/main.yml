@@ -10,7 +10,7 @@
     owner: root
     group: root
     mode: '0400'
-  notify: start odoo docker whitelists
+  notify: start odoo whitelists
   when: restrict_internet_access and whitelisted_urls is defined
   tags: odoo_nonprod, odoo_prod
 
