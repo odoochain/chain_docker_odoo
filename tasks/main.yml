@@ -11,7 +11,7 @@
     group: root
     mode: '0400'
   notify: start odoo whitelists
-  when: restrict_internet_access and whitelisted_urls is defined
+  when: restrict_internet_access and whitelisted_urls | default([])
   tags: odoo_nonprod, odoo_prod
 
 - name: non-prod intance setup
@@ -24,7 +24,7 @@
     label: "{{ item.key }}"
   vars:
     instance_odoo_setup: "{{ odoo_setup_conf[item.value.odoo_setup_version | default(odoo_setup_version)] }}"
-  when: (item.value.is_prod is not defined or not item.value.is_prod) and (odoo_instance is undefined or item.key == odoo_instance)
+  when: not (item.value.is_prod | default(false)) and (odoo_instance is undefined or item.key == odoo_instance)
 
 - name: prod intance setup
   include_tasks: instance.yml
@@ -33,7 +33,7 @@
     label: "{{ item.key }}"
   vars:
     instance_odoo_setup: "{{ odoo_setup_conf[item.value.odoo_setup_version | default(odoo_setup_version)] }}"
-  when: (item.value.is_prod is defined and item.value.is_prod) and (odoo_instance is undefined or item.key == odoo_instance)
+  when: item.value.is_prod | default(false) and (odoo_instance is undefined or item.key == odoo_instance)
 
 # --------------------------------------------------
 # Postgres Readonly user
@@ -45,7 +45,7 @@
       host {{ odoo_prod.db }} {{ odoo_prod.db_user }} 172.16.0.0/12 md5
       host postgres {{ odoo_prod.db_user }} 172.16.0.0/12 md5
       host {{ odoo_prod.db }} {{ odoo_db_rouser }} all md5
-  when: odoo_remote_db_access and odoo_prod is defined and docker_userns_remap
+  when: odoo_remote_db_access and odoo_prod | default(false) and docker_userns_remap
   tags: odoo_prod
 
 - name: PROD Allow readonly user connection to prod db (no userns_remap)
@@ -55,7 +55,7 @@
       host {{ odoo_prod.db }} {{ odoo_prod.db_user }} 172.16.0.0/12 md5
       host postgres {{ odoo_prod.db_user }} 172.16.0.0/12 md5
       host {{ odoo_prod.db }} {{ odoo_db_rouser }} all md5
-  when: odoo_remote_db_access and odoo_prod is defined and not docker_userns_remap
+  when: odoo_remote_db_access and odoo_prod | default(false) and not docker_userns_remap
   tags: odoo_prod
 
 - name: PROD Disable access all rights (with userns_remap)
@@ -63,7 +63,7 @@
     name: "/var/lib/docker/{{ dockremap_subuid }}.{{ dockremap_subgid }}/volumes/odoo_db/_data/pg_hba.conf"
     regexp: "^host all all all md5"
     line: "#host all all all md5"
-  when: odoo_remote_db_access and odoo_prod is defined and docker_userns_remap
+  when: odoo_remote_db_access and odoo_prod | default(false) and docker_userns_remap
   tags: odoo_prod
 
 - name: PROD Disable access all rights (no userns_remap)
@@ -71,5 +71,5 @@
     name: /var/lib/docker/volumes/odoo_db/_data/pg_hba.conf
     regexp: "^host all all all md5"
     line: "#host all all all md5"
-  when: odoo_remote_db_access and odoo_prod is defined and not docker_userns_remap
+  when: odoo_remote_db_access and odoo_prod | default(false) and not docker_userns_remap
   tags: odoo_prod

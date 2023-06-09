@@ -8,7 +8,7 @@
     mode: '0755'
 
 - name: container building requirements
-  when: (item.value.need_build is not defined and item.value.is_prod is defined and not item.value.is_prod) or (item.value.need_build is defined and item.value.need_build)
+  when: item.value.need_build | default(false)
   tags: ['never', 'build_odoo']
   block:
     - name: create Odoo docker structure on server in /home/docker/{{ item.key }}/odoo/private
@@ -92,7 +92,7 @@
         owner: root
         group: root
         mode: '0400'
-      when: git_private_keys is defined
+      when: git_private_keys | default(false)
       notify: build odoo image
 
     - name: copy Dockerfile to retrieve private repos and extra OCA ones
@@ -109,7 +109,7 @@
         - build odoo image
 
 - name: PROD set image
-  when: item.value.is_prod is defined and item.value.is_prod and item.value.from_instance is defined
+  when: item.value.is_prod | default(false) and item.value.from_instance is defined
   block:
     - name: PROD check if prod image exists
       docker_image_info:
@@ -130,7 +130,7 @@
     owner: root
     group: root
     mode: '0400'
-  when: item.value.is_prod is defined and item.value.is_prod
+  when: item.value.is_prod | default(false)
   notify: start odoo container
 
 - name: copy test docker-compose service
@@ -140,14 +140,14 @@
     owner: root
     group: root
     mode: '0400'
-  when: item.value.is_prod is undefined or not item.value.is_prod
+  when: not (item.value.is_prod | default(false))
   notify: start odoo container
 
 # --------------------------------------------------
 # non-prod restore section
 # --------------------------------------------------
 - name: non-prod restore
-  when: (item.value.is_prod is undefined or not item.value.is_prod) and inventory_hostname in groups.maintenance_contract
+  when: not (item.value.is_prod | default(false)) and inventory_hostname in groups.maintenance_contract
   tags: 'backup_odoo'
   block:
     - name: NONPROD copy sql script to be run before restoring db from prod
@@ -182,7 +182,7 @@
 # prod backup section
 # --------------------------------------------------
 - name: prod backup
-  when: item.value.is_prod is defined and item.value.is_prod and inventory_hostname in groups.maintenance_contract
+  when: item.value.is_prod | default(false) and inventory_hostname in groups.maintenance_contract
   tags: 'backup_odoo'
   block:
     - name: PROD copy docker compose for backups
@@ -215,7 +215,7 @@
 # Remote imports section
 # --------------------------------------------------
 - name: prod import
-  when: item.value.is_prod is defined and item.value.is_prod and inventory_hostname in groups.maintenance_contract
+  when: item.value.is_prod | default(false) and inventory_hostname in groups.maintenance_contract
   block:
     - name: PROD Push private keys for any external tool connection
       copy:

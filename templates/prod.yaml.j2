@@ -1,7 +1,7 @@
 version: "2.1"
 services:
     odoo:
-{% if item.value.need_build is defined and item.value.need_build %}
+{% if item.value.need_build | default(false) %}
         build:
             context: ./odoo
 {% endif %}
@@ -69,7 +69,7 @@ services:
 {% endif %}
         labels:
             co.elastic.logs/module: postgresql
-{% if item.value.odoo_remote_db_access is defined and item.value.odoo_remote_db_access %}
+{% if item.value.odoo_remote_db_access | default(false) %}
         networks:
             default:
             public:
@@ -162,7 +162,7 @@ services:
 
 {% endfor %}
 {% endif %}
-{% if item.value.metabase is defined and item.value.metabase %}
+{% if item.value.metabase | default(false) %}
     metabase:
         image: metabase/metabase
         container_name: {{ item.key }}_metabase
@@ -212,7 +212,7 @@ networks:
     inverseproxy_app:
         external: true
 {% endif %}
-{% if item.value.metabase is defined and item.value.metabase %}
+{% if item.value.metabase | default(false) %}
     inverseproxy_bi:
         external: true
 {% endif %}
@@ -242,7 +242,7 @@ networks:
             encrypted: 1
 {% endif %}
 {% endif %}
-{% if item.value.odoo_remote_db_access is defined and item.value.odoo_remote_db_access %}
+{% if item.value.odoo_remote_db_access | default(false) %}
     public:
 {% endif %}
 
@@ -252,6 +252,6 @@ volumes:
 {% if mailname is defined %}
     smtp:
 {% endif %}
-{% if item.value.metabase is defined and item.value.metabase %}
+{% if item.value.metabase | default(false) %}
     metabase:
 {% endif %}

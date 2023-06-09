@@ -10,21 +10,21 @@
     name: lefilament/odoo:{{ instance_odoo_version }}_ml
     source: pull
     force_source: true
-  when: not ansible_check_mode and instance.value.odoo_multilingual is defined and instance.value.odoo_multilingual
+  when: not ansible_check_mode and instance.value.odoo_multilingual | default(false)
 
 - name: pull odoo Python3.6 image
   docker_image:
     name: lefilament/odoo:{{ instance_odoo_version }}_py3.6
     source: pull
     force_source: true
-  when: not ansible_check_mode and instance.value.odoo_python36 is defined and instance.value.odoo_python36
+  when: not ansible_check_mode and instance.value.odoo_python36 | default(false)
 
 - name: pull odoo image
   docker_image:
     name: lefilament/odoo:{{ instance_odoo_version }}
     source: pull
     force_source: true
-  when: not ansible_check_mode and (instance.value.odoo_multilingual is not defined or not instance.value.odoo_multilingual) and (instance.value.odoo_python36 is not defined or not instance.value.odoo_python36)
+  when: not ansible_check_mode and not (instance.value.odoo_multilingual | default(false) or instance.value.odoo_python36 | default(false))
 
 - name: build odoo image
   docker_compose:

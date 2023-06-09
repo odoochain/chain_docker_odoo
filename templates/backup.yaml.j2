@@ -23,7 +23,7 @@ services:
         volumes:
             - {{ item.key }}{{ account.key }}_backup_cache:/root/.cache/duplicity/:z
             - {{ item.key }}_filestore:/mnt/backup/src/odoo:z
-{% if item.value.metabase is defined and item.value.metabase %}
+{% if item.value.metabase | default(false) %}
             - {{ item.key }}_metabase:/mnt/backup/src/metabase:z
 {% endif %}
         networks:
@@ -43,7 +43,7 @@ volumes:
     {{ item.key }}{{ account.key }}_backup_cache:
     {{ item.key }}_filestore:
         external: true
-{% if item.value.metabase is defined and item.value.metabase %}
+{% if item.value.metabase | default(false) %}
     {{ item.key }}_metabase:
         external: true
 {% endif %}
