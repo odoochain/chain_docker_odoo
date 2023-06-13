@@ -8,7 +8,7 @@
     mode: '0755'
 
 - name: container building requirements
-  when: item.value.need_build | default(false)
+  when: item.value.image_instance | default(false) == item.key
   tags: ['never', 'build_odoo']
   block:
     - name: create Odoo docker structure on server in /home/docker/{{ item.key }}/odoo/private
@@ -86,13 +86,13 @@
       notify: build odoo image
 
     - name: copy private Git ssh keys file
+      when: git_private_keys | default(false)
       copy:
         content: "{{ git_private_keys }}"
         dest: "/home/docker/{{ item.key }}/odoo/id_rsa"
         owner: root
         group: root
         mode: '0400'
-      when: git_private_keys | default(false)
       notify: build odoo image
 
     - name: copy Dockerfile to retrieve private repos and extra OCA ones
@@ -108,49 +108,38 @@
         - pull odoo image
         - build odoo image
 
-- name: PROD set image
-  when: item.value.is_prod | default(false) and item.value.from_instance is defined
+- name: Get image from another instance
+  when: item.value.image_instance | default(false) != item.key
   block:
-    - name: PROD check if prod image exists
+    - name: Check if instance image exists
       docker_image_info:
         name: "filament/{{ item.key }}:{{ instance_odoo_setup.odoo_version }}"
       register: prod_image
 
-    - name: PROD copy test image to prod if it does not exist
+    - name: Copy image from image_instance if it does not exist
+      when: prod_image.images | length == 0
       docker_image:
-        name: "filament/{{ item.value.from_instance }}:{{ instance_odoo_setup.odoo_version }}"
+        name: "filament/{{ item.value.image_instance }}:{{ instance_odoo_setup.odoo_version }}"
         repository: "filament/{{ item.key }}:{{ instance_odoo_setup.odoo_version }}"
         source: local
-      when: prod_image.images | length == 0
 
-- name: copy prod docker compose service
+- name: Copy docker compose service
   template:
-    src: prod.yaml.j2
+    src: docker-compose.yaml.j2
     dest: "/home/docker/{{ item.key }}/docker-compose.yml"
     owner: root
     group: root
     mode: '0400'
-  when: item.value.is_prod | default(false)
-  notify: start odoo container
-
-- name: copy test docker-compose service
-  template:
-    src: test.yaml.j2
-    dest: "/home/docker/{{ item.key }}/docker-compose.yml"
-    owner: root
-    group: root
-    mode: '0400'
-  when: not (item.value.is_prod | default(false))
   notify: start odoo container
 
 # --------------------------------------------------
 # non-prod restore section
 # --------------------------------------------------
-- name: non-prod restore
-  when: not (item.value.is_prod | default(false)) and inventory_hostname in groups.maintenance_contract
+- name: Restore backups from another instance
+  when: (item.value.backup_instance | default(item.key) != item.key or item.value.backup_host | default(inventory_hostname) != inventory_hostname) and inventory_hostname in groups.maintenance_contract
   tags: 'backup_odoo'
   block:
-    - name: NONPROD copy sql script to be run before restoring db from prod
+    - name: Copy sql script to be run before restoring db from backup_instance
       template:
         src: pre_restore-odootest.sql.j2
         dest: "/home/docker/backups/pre_restore-{{ item.key }}.sql"
@@ -158,7 +147,7 @@
         group: root
         mode: '0444'
 
-    - name: NONPROD copy sql script to be run after restoring db from prod
+    - name: Copy sql script to be run after restoring db from backup_instance
       template:
         src: post_restore-odootest.sql.j2
         dest: "/home/docker/backups/post_restore-{{ item.key }}.sql"
@@ -166,7 +155,7 @@
         group: root
         mode: '0444'
 
-    - name: NONPROD copy compose file to restore db from prod
+    - name: Copy compose file to restore db from backup_instance
       template:
         src: restore-odootest.yaml.j2
         dest: "/home/docker/backups/restore-{{ item.key }}{{ account.key }}.yaml"
@@ -181,11 +170,11 @@
 # --------------------------------------------------
 # prod backup section
 # --------------------------------------------------
-- name: prod backup
-  when: item.value.is_prod | default(false) and inventory_hostname in groups.maintenance_contract
+- name: Backup
+  when: item.value.backup_instance | default(false) == item.key and item.value.backup_host | default(inventory_hostname) == inventory_hostname and inventory_hostname in groups.maintenance_contract
   tags: 'backup_odoo'
   block:
-    - name: PROD copy docker compose for backups
+    - name: Copy docker compose for backups
       template:
         src: backup.yaml.j2
         dest: "/home/docker/backups/backup-{{ item.key }}{{ account.key }}.yaml"
@@ -197,51 +186,21 @@
         label: "{{ account.key }}"
         loop_var: account
 
-    - name: PROD add cron job to run backup every day
+    # TODO: duplicate with swift_accounts
+    - name: Add cron job to run backup every day
       cron:
-        name: "backup {{ item.key}}"
+        name: "backup {{ item.key }}"
         minute: "50"
         hour: "01"
         job: /usr/local/bin/docker-compose -f /home/docker/backups/backup-{{ item.key }}1.yaml run --rm backup_odoo
 
-    - name: PROD add cron job to run backup2 every day
+    - name: Add cron job to run backup2 every day
       cron:
-        name: "backup2 {{ item.key}}"
+        name: "backup2 {{ item.key }}"
         minute: "00"
         hour: "23"
         job: /usr/local/bin/docker-compose -f /home/docker/backups/backup-{{ item.key }}2.yaml run --rm backup_odoo
 
-# --------------------------------------------------
-# Remote imports section
-# --------------------------------------------------
-- name: prod import
-  when: item.value.is_prod | default(false) and inventory_hostname in groups.maintenance_contract
-  block:
-    - name: PROD Push private keys for any external tool connection
-      copy:
-        content: "{{ private_keys }}"
-        dest: "/root/.ssh/id_rsa"
-        owner: root
-        group: root
-        mode: '0400'
-      when: private_keys is defined
-
-    - name: PROD Copy script file for collecting remote files
-      template:
-        src: pull_remote_files.sh.j2
-        dest: /root/pull_remote_files.sh
-        owner: root
-        group: root
-        mode: '0700'
-      when: private_pull is defined
-
-    - name: PROD add cron job to pull files from remote server
-      cron:
-        name: pull remote server files
-        minute: "30"
-        hour: "23"
-        job: /root/pull_remote_files.sh
-      when: private_pull is defined
 
 # Flush handlers.
 - name: set facts
@@ -252,3 +211,43 @@
 
 - name: Flush handlers
   meta: flush_handlers
+
+# --------------------------------------------------
+# Postgres Readonly user
+# --------------------------------------------------
+- name: Postgres Read-only user
+  when: item.value.odoo_remote_db_access | default(false)
+  block:
+    - name: Allow readonly user connection to prod db (with userns_remap)
+      when: docker_userns_remap
+      blockinfile:
+        path: "/var/lib/docker/{{ dockremap_subuid }}.{{ dockremap_subgid }}/volumes/{{ item.key }}_db/_data/pg_hba.conf"
+        block: |
+          host {{ item.value.db }} {{ odoo_instances[item.value.prod_instance | default(item.key )].db_user }} 172.16.0.0/12 md5
+          host postgres {{ odoo_instances[item.value.prod_instance | default(item.key )].db_user }} 172.16.0.0/12 md5
+          host {{ item.value.db }} {{ item.value.odoo_db_rouser }} all md5
+
+    - name: PROD Allow readonly user connection to prod db (no userns_remap)
+      when: not docker_userns_remap
+      blockinfile:
+        path: /var/lib/docker/volumes/{{ item.key }}_db/_data/pg_hba.conf
+        block: |
+          host {{ item.value.db }} {{ odoo_instances[item.value.prod_instance | default(item.key )].db_user }} 172.16.0.0/12 md5
+          host postgres {{ odoo_instances[item.value.prod_instance | default(item.key )].db_user }} 172.16.0.0/12 md5
+          host {{ item.value.db }} {{ item.value.odoo_db_rouser }} all md5
+
+    - name: PROD Disable access all rights (with userns_remap)
+      when: docker_userns_remap
+      lineinfile:
+        name: "/var/lib/docker/{{ dockremap_subuid }}.{{ dockremap_subgid }}/volumes/{{ item.key }}_db/_data/pg_hba.conf"
+        regexp: "^host all all all md5"
+        line: "#host all all all md5"
+
+    - name: PROD Disable access all rights (no userns_remap)
+      when: not docker_userns_remap
+      lineinfile:
+        name: /var/lib/docker/volumes/{{ item.key }}_db/_data/pg_hba.conf
+        regexp: "^host all all all md5"
+        line: "#host all all all md5"
+
+    # TODO: add restart db container

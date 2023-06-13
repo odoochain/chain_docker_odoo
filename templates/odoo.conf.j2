@@ -1,15 +1,7 @@
 [options]
 ;; COMMON OPTIONS
 addons_path = /opt/odoo/odoo/addons,/opt/odoo/additional_addons,/opt/odoo/private_addons
-{% if item.value.master_pass is defined %}
-admin_passwd = {{ item.value.master_pass | password_hash('pbkdf2_sha512', 65534 | random(seed=inventory_hostname) | string) }}
-{% elif item.value.from_host is defined and item.value.from_instance is defined %}
-admin_passwd = {{ hostvars[item.value.from_host]['odoo_instances'][item.value.from_instance].master_pass | password_hash('pbkdf2_sha512', 65534 | random(seed=inventory_hostname) | string) }}
-{% elif item.value.from_host is undefined and item.value.from_instance is defined %}
-admin_passwd = {{ odoo_instances[item.value.from_instance].master_pass | password_hash('pbkdf2_sha512', 65534 | random(seed=inventory_hostname) | string) }}
-{% else %}
-{{ mandatory('err: no odoo master password found') }}
-{% endif %}
+admin_passwd = {{ odoo_instances[item.value.prod_instance | default(item.key )].master_pass | password_hash('pbkdf2_sha512', 65534 | random(seed=inventory_hostname) | string) }}
 data_dir = /opt/odoo/data
 {% if instance_odoo_setup.odoo_version == '12.0' or instance_odoo_setup.odoo_version == '14.0' or instance_odoo_setup.odoo_version == '16.0' %}
 server_wide_modules = base,web,module_change_auto_install{% if item.value.odoo_server_wide_modules is defined %},{{ item.value.odoo_server_wide_modules }}{% endif %}
@@ -52,24 +44,12 @@ smtp_server = smtp
 ; smtp_user = False
 
 ;; Database related options
-{% if item.value.db is defined and item.value.db_pass is defined and item.value.db_user is defined %}
-db_name = {{ item.value.db }}
-db_password = {{ item.value.db_pass }}
-db_user = {{ item.value.db_user }}
-{% elif item.value.from_host is defined and item.value.from_instance is defined %}
-db_name = {{ hostvars[item.value.from_host]['odoo_instances'][item.value.from_instance].db }}
-db_password = {{ hostvars[item.value.from_host]['odoo_instances'][item.value.from_instance].db_pass }}
-db_user = {{ hostvars[item.value.from_host]['odoo_instances'][item.value.from_instance].db_user }}
-{% elif item.value.from_host is undefined and item.value.from_instance is defined %}
-db_name = {{ odoo_instances[item.value.from_instance].db }}
-db_password = {{ odoo_instances[item.value.from_instance].db_pass }}
-db_user = {{ odoo_instances[item.value.from_instance].db_user }}
-{% else %}
-{{ mandatory('err: no odoo db variables found') }}
-{% endif %}
+db_name = {{ odoo_instances[item.value.prod_instance | default(item.key )].db }}
+db_password = {{ odoo_instances[item.value.prod_instance | default(item.key )].db_pass }}
+db_user = {{ odoo_instances[item.value.prod_instance | default(item.key )].db_user }}
 ; db_template = template0
 db_host = db
-db_maxconn = {{ item.value.odoo_db_maxconn | default(64) }}
+db_maxconn = {{ odoo_instances[item.value.prod_instance | default(item.key )].odoo_db_maxconn | default(64) }}
 ; db_sslmode = prefer
 ; pg_path =
 
@@ -86,10 +66,10 @@ unaccent = True
 ; limit_memory_hard = 2684354560
 ; limit_memory_soft = 2147483648
 ; limit_request = 65536
-limit_time_cpu = {{ item.value.odoo_limit_time_cpu | default(300) }}
-limit_time_real = {{ item.value.odoo_limit_time_real | default(600) }}
+limit_time_cpu = {{ odoo_instances[item.value.prod_instance | default(item.key )].odoo_limit_time_cpu | default(300) }}
+limit_time_real = {{ odoo_instances[item.value.prod_instance | default(item.key )].odoo_limit_time_real | default(600) }}
 ; limit_time_real_cron = -1
-{% if ansible_processor_vcpus > 2 or item.value.force_odoo_workers is defined %}
+{% if ansible_processor_vcpus > 2 or odoo_instances[item.value.prod_instance | default(item.key )].force_odoo_workers is defined %}
 max_cron_threads = {{ ansible_processor_vcpus | int }}
 workers = {{ (ansible_processor_vcpus * 2 - 1) | int | abs }}
 {% else %}
@@ -99,31 +79,31 @@ workers = {{ (ansible_processor_vcpus * 2 - 1) | int | abs }}
 {% if instance_odoo_setup.odoo_version == '12.0' %}
 
 ;; Autoinstall options
-modules_auto_install_disabled = account_facturx,mail_bot,web_unsplash{% if odoo_modules_auto_install_disabled is defined %},{{ odoo_modules_auto_install_disabled }}{% endif %}
+modules_auto_install_disabled = account_facturx,mail_bot,web_unsplash{% if odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_disabled is defined %},{{ odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_disabled }}{% endif %}
 
-modules_auto_install_enabled = disable_odoo_online,lefilament_release_agent,mail_debrand,partner_disable_gravatar,partner_firstname,password_security,remove_odoo_enterprise,web_responsive,web_no_bubble{% if odoo_modules_auto_install_enabled is defined %},{{ odoo_modules_auto_install_enabled }}{% endif %}
+modules_auto_install_enabled = disable_odoo_online,lefilament_release_agent,mail_debrand,partner_disable_gravatar,partner_firstname,password_security,remove_odoo_enterprise,web_responsive,web_no_bubble{% if odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled is defined %},{{ odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled }}{% endif %}
 
 {% endif %}
 {% if instance_odoo_setup.odoo_version == '14.0' %}
 
 ;; Autoinstall options
-modules_auto_install_disabled = account_edi,mail_bot,web_unsplash{% if odoo_modules_auto_install_disabled is defined %},{{ odoo_modules_auto_install_disabled }}{% endif %}
+modules_auto_install_disabled = account_edi,mail_bot,web_unsplash{% if odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_disabled is defined %},{{ odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_disabled }}{% endif %}
 
-modules_auto_install_enabled = account_move_name_sequence,account_reconcile_show_boolean,account_reconciliation_widget,disable_odoo_online,lefilament_release_agent,mail_debrand,partner_disable_gravatar,partner_firstname,password_security,remove_login_links,remove_odoo_enterprise,web_responsive,web_no_bubble{% if odoo_modules_auto_install_enabled is defined %},{{ odoo_modules_auto_install_enabled }}{% endif %}
+modules_auto_install_enabled = account_move_name_sequence,account_reconcile_show_boolean,account_reconciliation_widget,disable_odoo_online,lefilament_release_agent,mail_debrand,partner_disable_gravatar,partner_firstname,password_security,remove_login_links,remove_odoo_enterprise,web_responsive,web_no_bubble{% if odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled is defined %},{{ odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled }}{% endif %}
 
 {% endif %}
 {% if instance_odoo_setup.odoo_version == '16.0' %}
 
 ;; Autoinstall options
-modules_auto_install_disabled = account_edi,google_gmail,mail_bot,web_unsplash{% if odoo_modules_auto_install_disabled is defined %},{{ odoo_modules_auto_install_disabled }}{% endif %}
+modules_auto_install_disabled = account_edi,google_gmail,mail_bot,web_unsplash{% if odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_disabled is defined %},{{ odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_disabled }}{% endif %}
 
 ; to be updated once all modules are available
-modules_auto_install_enabled = account_move_name_sequence,disable_odoo_online,lefilament_release_agent,partner_disable_gravatar,partner_firstname,remove_login_links,remove_odoo_enterprise,web_responsive,web_theme_classic{% if odoo_modules_auto_install_enabled is defined %},{{ odoo_modules_auto_install_enabled }}{% endif %}
-; modules_auto_install_enabled = account_move_name_sequence,account_reconcile_show_boolean,account_reconcile_oca,disable_odoo_online,lefilament_release_agent,mail_debrand,partner_disable_gravatar,partner_firstname,password_security,remove_login_links,remove_odoo_enterprise,web_responsive,web_no_bubble,web_theme_classic{% if odoo_modules_auto_install_enabled is defined %},{{ odoo_modules_auto_install_enabled }}{% endif %}
+modules_auto_install_enabled = account_move_name_sequence,disable_odoo_online,lefilament_release_agent,partner_disable_gravatar,partner_firstname,remove_login_links,remove_odoo_enterprise,web_responsive,web_theme_classic{% if odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled is defined %},{{ odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled }}{% endif %}
+; modules_auto_install_enabled = account_move_name_sequence,account_reconcile_show_boolean,account_reconcile_oca,disable_odoo_online,lefilament_release_agent,mail_debrand,partner_disable_gravatar,partner_firstname,password_security,remove_login_links,remove_odoo_enterprise,web_responsive,web_no_bubble,web_theme_classic{% if odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled is defined %},{{ odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled }}{% endif %}
 
 {% endif %}
-{% if item.value.odoo_extra_conf is defined %}
+{% if odoo_instances[item.value.prod_instance | default(item.key )].odoo_extra_conf is defined %}
 
 ;; Extra options
-{{ item.value.odoo_extra_conf }}
+{{ odoo_instances[item.value.prod_instance | default(item.key )].odoo_extra_conf }}
 {% endif %}

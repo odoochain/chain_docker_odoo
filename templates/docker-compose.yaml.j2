@@ -1,7 +1,8 @@
 version: "2.1"
 services:
     odoo:
-{% if item.value.need_build | default(false) %}
+{# if instance is to be built #}
+{% if item.value.image_instance | default(false) == item.key %}
         build:
             context: ./odoo
 {% endif %}
@@ -19,7 +20,8 @@ services:
         tty: true
         volumes:
             - filestore:/opt/odoo/data:z
-{% if banking %}
+{# if prod and banking #}
+{% if item.value.prod_instance | default(false) == item.key and banking %}
             - ./bank/:/ofx/:ro
 {% endif %}
 {% if private_pull is defined %}
@@ -36,14 +38,20 @@ services:
             extrawhitelists_proxy:
 {% endif %}
 {% endif %}
-{% if mailname is defined %}
+{# if prod and mailname #}
+{% if item.value.prod_instance | default(false) == item.key and mailname | default(false) %}
             email_proxy:
 {% endif %}
         restart: unless-stopped
         labels:
+{# if prod #}
+{% if item.value.prod_instance | default(false) == item.key %}
             co.elastic.logs/multiline.pattern: '^[0-9]{2}'
             co.elastic.logs/multiline.negate: 'true'
             co.elastic.logs/multiline.match: "after"
+{% else %}
+            co.elastic.logs/enabled: "false"
+{% endif %}
             traefik.enable: "true"
 {% if ansible_processor_vcpus > 2 or item.value.force_odoo_workers is defined %}
             traefik.http.routers.{{ item.key }}-{{ instance_odoo_setup.websocket_uri }}.rule: "Host(`{{ item.value.url }}`{% if item.value.url2 is defined %}, `{{ item.value.url2 }}`{% endif %}) && PathPrefix(`/{{ instance_odoo_setup.websocket_uri }}/`)"
@@ -56,19 +64,37 @@ services:
             traefik.http.routers.{{ item.key }}.rule: "Host(`{{ item.value.url }}`{% if item.value.url2 is defined %}, `{{ item.value.url2 }}`{% endif %})"
             traefik.http.routers.{{ item.key }}.service: "{{ item.key }}"
             traefik.http.services.{{ item.key }}.loadbalancer.server.port: "8069"
+{# if not prod #}
+{% if item.value.prod_instance | default(false) != item.key %}
+            traefik.http.routers.{{ item.key }}.middlewares: "norobot-headers@file"
+        command:
+            - odoo
+            - --smtp-port=1025
+            - --database={{ item.value.db }}
+            - --init=web_environment_ribbon
+{% if ansible_processor_vcpus > 2 or item.value.force_odoo_workers is defined %}
+            - --workers=2
+            - --max-cron-threads=1
+{% endif %}
+{% endif %}
 
     db:
         image: postgres:{{ instance_odoo_setup.postgres_version }}-alpine
         container_name: {{ item.key }}_db
         environment:
             POSTGRES_DB: "postgres"
-            POSTGRES_USER: "{{ item.value.db_user }}"
-            POSTGRES_PASSWORD: "{{ item.value.db_pass }}"
+            POSTGRES_USER: "{{ odoo_instances[item.value.prod_instance | default(item.key)].db_user }}"
+            POSTGRES_PASSWORD: "{{ odoo_instances[item.value.prod_instance | default(item.key)].db_pass }}"
 {% if item.value.postgres_options is defined %}
         command: {{ item.value.postgres_options }}
 {% endif %}
         labels:
+{# if prod #}
+{% if item.value.prod_instance | default(false) == item.key %}
             co.elastic.logs/module: postgresql
+{% else %}
+            co.elastic.logs/enabled: "false"
+{% endif %}
 {% if item.value.odoo_remote_db_access | default(false) %}
         networks:
             default:
@@ -81,7 +107,8 @@ services:
         restart: unless-stopped
 
     smtp:
-{% if mailname is defined %}
+{# if prod and mailname #}
+{% if item.value.prod_instance | default(false) == item.key and mailname | default(false) %}
         image: tecnativa/postfix-relay
         container_name: {{ item.key }}_smtp
         networks:
@@ -140,6 +167,18 @@ services:
         restart: unless-stopped
         labels:
             co.elastic.logs/enabled: "false"
+{# if not prod #}
+{% if item.value.prod_instance | default(false) != item.key %}
+            traefik.docker.network: "inverseproxy_smtp"
+            traefik.enable: "true"
+            traefik.http.routers.{{ item.key }}smtp.middlewares: "auth@file, smtp-stripprefix@file"
+            traefik.http.routers.{{ item.key }}smtp.rule: "Host(`{{ item.value.url }}`) && PathPrefix(`/smtp/`)"
+            traefik.http.routers.{{ item.key }}smtp.service: "{{ item.key }}smtp"
+            traefik.http.services.{{ item.key }}smtp.loadbalancer.server.port: "8025"
+        networks:
+            default:
+            inverseproxy_smtp:
+{% endif %}
 
 {% endif %}
 {% if restrict_internet_access and item.value.extra_urls is defined %}
@@ -208,6 +247,11 @@ networks:
             encrypted: 1
     inverseproxy_shared:
         external: true
+{# if not prod #}
+{% if item.value.prod_instance | default(false) != item.key %}
+    inverseproxy_smtp:
+        external: true
+{% endif %}
 {% if item.value.extra_app is defined %}
     inverseproxy_app:
         external: true
@@ -231,7 +275,8 @@ networks:
             encrypted: 1
 {% endif %}
 {% endif %}
-{% if mailname is defined %}
+{# if prod and mailname #}
+{% if item.value.prod_instance | default(false) == item.key and mailname | default(false) %}
     email_proxy:
         driver_opts:
             encrypted: 1
@@ -249,7 +294,8 @@ networks:
 volumes:
     filestore:
     db:
-{% if mailname is defined %}
+{# if prod and mailname #}
+{% if item.value.prod_instance | default(false) == item.key and mailname | default(false) %}
     smtp:
 {% endif %}
 {% if item.value.metabase | default(false) %}

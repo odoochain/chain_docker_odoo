@@ -1,4 +1,5 @@
 ## Image to get git repos
+{# TODO: make base image a variable #}
 FROM lefilament/odoo:{{ instance_odoo_setup.odoo_version }}{% if item.value.odoo_python36 | default(false) %}_py3.6{% endif %}{% if item.value.odoo_multilingual | default(false) %}_ml{% endif %} as odoo_addons
 LABEL stage=builder
 USER root
@@ -16,6 +17,7 @@ RUN /opt/odoo/private/fetch_repos_addons
 RUN /opt/odoo/private/fetch_repos
 
 ## Final image
+{# TODO: make base image a variable #}
 FROM lefilament/odoo:{{ instance_odoo_setup.odoo_version }}{% if item.value.odoo_python36 | default(false) %}_py3.6{% endif %}{% if item.value.odoo_multilingual | default(false) %}_ml{% endif %} as final
 USER root
 COPY --from=odoo_addons --chown=odoo:odoo /opt/odoo/private_addons /opt/odoo/private_addons

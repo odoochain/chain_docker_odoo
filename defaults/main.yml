@@ -123,8 +123,8 @@ odoo_remote_db_access: false
 # odoo_limit_time_real: 600
 ## OPTIONAL - Extra variables to be added in odoo.conf
 # odoo_server_wide_modules: "queue_job"
-# odoo_modules_auto_install_disabled: "stock_sms"
-# odoo_modules_auto_install_enabled: "mail_tracking"
+# modules_auto_install_disabled: "stock_sms"
+# modules_auto_install_enabled: "mail_tracking"
 # odoo_extra_conf: "log_level = debug"
 ## OPTIONAL - update performance limits for Odoo (see https://www.odoo.com/documentation/14.0/developer/reference/cmdline.html)
 # postgres_options: "-c max_connections=100"

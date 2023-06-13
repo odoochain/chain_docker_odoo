@@ -12,9 +12,8 @@
     mode: '0400'
   notify: start odoo whitelists
   when: restrict_internet_access and whitelisted_urls | default([])
-  tags: odoo_nonprod, odoo_prod
 
-- name: non-prod intance setup
+- name: non-prod instance setup
   include_tasks:
     file: instance.yml
     apply:
@@ -24,52 +23,44 @@
     label: "{{ item.key }}"
   vars:
     instance_odoo_setup: "{{ odoo_setup_conf[item.value.odoo_setup_version | default(odoo_setup_version)] }}"
-  when: not (item.value.is_prod | default(false)) and (odoo_instance is undefined or item.key == odoo_instance)
+  when: not (item.value.prod_instance | default(false) == item.key) and (odoo_instance is undefined or item.key == odoo_instance)
 
-- name: prod intance setup
+- name: prod instance setup
   include_tasks: instance.yml
   with_dict: "{{ odoo_instances }}"
   loop_control:
     label: "{{ item.key }}"
   vars:
     instance_odoo_setup: "{{ odoo_setup_conf[item.value.odoo_setup_version | default(odoo_setup_version)] }}"
-  when: item.value.is_prod | default(false) and (odoo_instance is undefined or item.key == odoo_instance)
+  when: item.value.prod_instance | default(false) == item.key and (odoo_instance is undefined or item.key == odoo_instance)
 
 # --------------------------------------------------
-# Postgres Readonly user
+# Remote imports section
 # --------------------------------------------------
-- name: PROD Allow readonly user connection to prod db (with userns_remap)
-  blockinfile:
-    path: "/var/lib/docker/{{ dockremap_subuid }}.{{ dockremap_subgid }}/volumes/odoo_db/_data/pg_hba.conf"
-    block: |
-      host {{ odoo_prod.db }} {{ odoo_prod.db_user }} 172.16.0.0/12 md5
-      host postgres {{ odoo_prod.db_user }} 172.16.0.0/12 md5
-      host {{ odoo_prod.db }} {{ odoo_db_rouser }} all md5
-  when: odoo_remote_db_access and odoo_prod | default(false) and docker_userns_remap
-  tags: odoo_prod
+- name: Remote Imports
+  block:
+    - name: Push private keys for any external tool connection
+      when: private_keys is defined
+      copy:
+        content: "{{ private_keys }}"
+        dest: "/root/.ssh/id_rsa"
+        owner: root
+        group: root
+        mode: '0400'
 
-- name: PROD Allow readonly user connection to prod db (no userns_remap)
-  blockinfile:
-    path: /var/lib/docker/volumes/odoo_db/_data/pg_hba.conf
-    block: |
-      host {{ odoo_prod.db }} {{ odoo_prod.db_user }} 172.16.0.0/12 md5
-      host postgres {{ odoo_prod.db_user }} 172.16.0.0/12 md5
-      host {{ odoo_prod.db }} {{ odoo_db_rouser }} all md5
-  when: odoo_remote_db_access and odoo_prod | default(false) and not docker_userns_remap
-  tags: odoo_prod
+    - name: PROD Copy script file for collecting remote files
+      when: private_pull is defined
+      template:
+        src: pull_remote_files.sh.j2
+        dest: /root/pull_remote_files.sh
+        owner: root
+        group: root
+        mode: '0700'
 
-- name: PROD Disable access all rights (with userns_remap)
-  lineinfile:
-    name: "/var/lib/docker/{{ dockremap_subuid }}.{{ dockremap_subgid }}/volumes/odoo_db/_data/pg_hba.conf"
-    regexp: "^host all all all md5"
-    line: "#host all all all md5"
-  when: odoo_remote_db_access and odoo_prod | default(false) and docker_userns_remap
-  tags: odoo_prod
-
-- name: PROD Disable access all rights (no userns_remap)
-  lineinfile:
-    name: /var/lib/docker/volumes/odoo_db/_data/pg_hba.conf
-    regexp: "^host all all all md5"
-    line: "#host all all all md5"
-  when: odoo_remote_db_access and odoo_prod | default(false) and not docker_userns_remap
-  tags: odoo_prod
+    - name: PROD add cron job to pull files from remote server
+      when: private_pull is defined
+      cron:
+        name: pull remote server files
+        minute: "30"
+        hour: "23"
+        job: /root/pull_remote_files.sh

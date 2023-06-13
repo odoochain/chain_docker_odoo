@@ -98,7 +98,7 @@ odoo_prod_example: # To be renamed odoo_prod
     #       branch: 12.0-mig-account_bank_statement_import_ofx
     #       modules:
     #           - account_bank_statement_import_ofx
-    ## OPTIONAL extra_urls to be accessible from this Odoo intance only
+    ## OPTIONAL extra_urls to be accessible from this Odoo instance only
     ## (if URLs need to be accessible from both prod and non-prod instances, use whitelisted_urls instead)
     # extra_urls:
     #     - url: "docs.example.org"
@@ -190,8 +190,8 @@ odoo_nonprod_instances_example: # To be renamed odoo_nonprod_instances
       # odoo_limit_time_real: 600
       ## OPTIONAL - Extra variables to be added in odoo.conf
       # odoo_server_wide_modules: "queue_job"
-      # odoo_modules_auto_install_disabled: "stock_sms"
-      # odoo_modules_auto_install_enabled: "mail_tracking"
+      # modules_auto_install_disabled: "stock_sms"
+      # modules_auto_install_enabled: "mail_tracking"
       # odoo_extra_conf: "log_level = debug"
       ## OPTIONAL - update performance limits for Odoo (see https://www.odoo.com/documentation/14.0/developer/reference/cmdline.html)
       # postgres_options: "-c max_connections=100"
