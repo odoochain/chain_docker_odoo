@@ -7,19 +7,19 @@ services:
             - {{ item.key }}_default
             - public
         volumes:
-            - backups_{{ item.value.backup_instance }}{{ account.key }}_backup_cache:/root/.cache/duplicity/:z
+            - backups_{{ item.value.backup_instance }}{{ account_index + 1 }}_backup_cache:/root/.cache/duplicity/:z
             - {{ item.key }}_filestore:/mnt/backup/src/odoo:z
             - ./post_restore-{{ item.key }}.sql:/tmp/post-restore.sql:ro
             - ./pre_restore-{{ item.key }}.sql:/tmp/pre-restore.sql:ro
         environment:
             PGDATABASE: "{{ item.value.db }}"
-            SWIFT_USERNAME: "{{ account.value.swift_username }}"
-            SWIFT_PASSWORD: "{{ account.value.swift_password }}"
-            SWIFT_AUTHURL: "{{ account.value.swift_authurl }}"
-            SWIFT_AUTHVERSION: {{ account.value.swift_authversion }}
-            SWIFT_TENANTNAME: "{{ account.value.swift_tenantname }}"
-            SWIFT_TENANTID: "{{ account.value.swift_tenantid }}"
-            SWIFT_REGIONNAME: "{{ account.value.swift_regionname }}"
+            SWIFT_USERNAME: "{{ account.username }}"
+            SWIFT_PASSWORD: "{{ account.password }}"
+            SWIFT_AUTHURL: "{{ account.authurl }}"
+            SWIFT_AUTHVERSION: {{ account.authversion }}
+            SWIFT_TENANTNAME: "{{ account.tenantname }}"
+            SWIFT_TENANTID: "{{ account.tenantid }}"
+            SWIFT_REGIONNAME: "{{ account.regionname }}"
             OPTIONS: "--force"
             DST: "swift://{{ item.value.backup_instance }}_{{ item.value.backup_host | default(inventory_hostname) | lower }}"
             PGUSER: "{{ odoo_instances[item.value.prod_instance | default(item.key )].db_user }}"
@@ -35,7 +35,7 @@ networks:
             encrypted: 1
 
 volumes:
-    backups_{{ item.value.backup_instance }}{{ account.key }}_backup_cache:
+    backups_{{ item.value.backup_instance }}{{ account_index + 1 }}_backup_cache:
 {% if item.value.backup_host | default(inventory_hostname) == inventory_hostname %}
         external: true
 {% endif %}

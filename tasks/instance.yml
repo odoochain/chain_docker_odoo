@@ -158,13 +158,14 @@
     - name: Copy compose file to restore db from backup_instance
       template:
         src: restore-odootest.yaml.j2
-        dest: "/home/docker/backups/restore-{{ item.key }}{{ account.key }}.yaml"
+        dest: "/home/docker/backups/restore-{{ item.key }}{{ account_index + 1 }}.yaml"
         owner: root
         group: root
         mode: '0400'
-      with_dict: "{{ swift_accounts }}"
+      loop: "{{ swift_accounts }}"
       loop_control:
-        label: "{{ account.key }}"
+        label: "account {{ account_index + 1 }}"
+        index_var: account_index
         loop_var: account
 
 # --------------------------------------------------
@@ -174,33 +175,31 @@
   when: item.value.backup_instance | default(false) == item.key and item.value.backup_host | default(inventory_hostname) == inventory_hostname and inventory_hostname in groups.maintenance_contract
   tags: 'backup_odoo'
   block:
-    - name: Copy docker compose for backups
+    - name: "Copy docker compose for backup account {{ account_index + 1 }}"
       template:
         src: backup.yaml.j2
-        dest: "/home/docker/backups/backup-{{ item.key }}{{ account.key }}.yaml"
+        dest: "/home/docker/backups/backup-{{ item.key }}{{ account_index + 1 }}.yaml"
         owner: root
         group: root
         mode: '0400'
-      with_dict: "{{ swift_accounts }}"
+      loop: "{{ swift_accounts }}"
       loop_control:
-        label: "{{ account.key }}"
+        label: "account {{ account_index + 1 }}"
+        index_var: account_index
         loop_var: account
 
     # TODO: duplicate with swift_accounts
-    - name: Add cron job to run backup every day
+    - name: "Add cron job to run backup account {{ account_index + 1 }} every day"
       cron:
-        name: "backup {{ item.key }}"
-        minute: "50"
-        hour: "01"
-        job: /usr/local/bin/docker-compose -f /home/docker/backups/backup-{{ item.key }}1.yaml run --rm backup_odoo
-
-    - name: Add cron job to run backup2 every day
-      cron:
-        name: "backup2 {{ item.key }}"
-        minute: "00"
-        hour: "23"
-        job: /usr/local/bin/docker-compose -f /home/docker/backups/backup-{{ item.key }}2.yaml run --rm backup_odoo
-
+        name: "backup {{ item.key }}{{ account_index + 1 }}"
+        minute: "{{ '%M' | strftime((('1970-01-01 ' + backup_time_start) | to_datetime).timestamp() + ( swift_accounts | length - (account_index + 1)) * ((backup_time_slot_duration | community.general.to_seconds - swift_accounts | length * backup_time_max_duration | community.general.to_seconds) / (swift_accounts | length - 1) + backup_time_max_duration | community.general.to_seconds) | int) }}"
+        hour: "{{ '%H' | strftime((('1970-01-01 ' + backup_time_start) | to_datetime).timestamp() + ( swift_accounts | length - (account_index + 1)) * ((backup_time_slot_duration | community.general.to_seconds - swift_accounts | length * backup_time_max_duration | community.general.to_seconds) / (swift_accounts | length - 1) + backup_time_max_duration | community.general.to_seconds) | int) }}"
+        job: "/usr/local/bin/docker-compose -f /home/docker/backups/backup-{{ item.key }}{{ account_index + 1 }}.yaml run --rm backup_odoo"
+      loop: "{{ swift_accounts }}"
+      loop_control:
+        label: "account {{ account_index + 1 }}"
+        index_var: account_index
+        loop_var: account
 
 # Flush handlers.
 - name: set facts

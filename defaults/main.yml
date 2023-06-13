@@ -1,35 +1,6 @@
 ---
-
 ## Odoo configuration
-## Odoo PostgreSQL version
-odoo_db_version: '13'
-## Odoo version
-odoo_version: '16.0'
-## Odoo websocket URI (websocket from 16.0 onwards, longpolling before)
-websocket_uri: 'websocket'
-
-odoo_setup_version: '16'
-odoo_setup_conf:
-  16:
-    odoo_version: '16.0'
-    postgres_version: '15'
-    websocket_uri: 'websocket'
-  15:
-    odoo_version: '15.0'
-    postgres_version: '13'
-    websocket_uri: 'longpolling'
-  14:
-    odoo_version: '14.0'
-    postgres_version: '13'
-    websocket_uri: 'longpolling'
-  12:
-    odoo_version: '12.0'
-    postgres_version: '10'
-    websocket_uri: 'longpolling'
-  10:
-    odoo_version: '10.0'
-    postgres_version: '9.6'
-    websocket_uri: 'longpolling'
+odoo_setup_version: 16
 
 ## Custom modules default URL for retrieving custom modules :
 custom_modules_base_url: "https://sources.le-filament.com/lefilament"
@@ -136,21 +107,23 @@ metabase: false
 
 
 ## OPTIONAL - For Backups only
-## Parameters for pushing backups to Object Storage - Instance 1
-# swift_odoo_authurl: https://auth.cloud.ovh.net/v3/
-# swift_odoo_authversion: 3
-# swift_odoo_tenantid: "132e1fa"
-# swift_odoo_tenantname: "12312534534"
-# swift_odoo_username: "testuser"
-# swift_odoo_password: "testpassword"
-# swift_odoo_regionname: "GRA"
-## Parameters for pushing backups to Object Storage - Instance 2
-# swift_odoo2_authurl: https://auth.cloud.ovh.net/v3/
-# swift_odoo2_authversion: 3
-# swift_odoo2_tenantid: "12323534ab"
-# swift_odoo2_tenantname: "123124235345"
-# swift_odoo2_username: "testuser"
-# swift_odoo2_password: "testpassword"
-# swift_odoo2_regionname: "DE"
+# swift_accounts:
+##    Parameters for pushing backups to Object Storage - Instance 1
+#     - authurl: https://auth.cloud.ovh.net/v3/
+#       authversion: 3
+#       tenantid: "132e1fa"
+#       tenantname: "12312534534"
+#       username: "testuser"
+#       password: "testpassword"
+#       regionname: "GRA"
+#
+##    Parameters for pushing backups to Object Storage - Instance 2
+#     - authurl: https://auth.cloud.ovh.net/v3/
+#       authversion: 3
+#       tenantid: "12323534ab"
+#       tenantname: "123124235345"
+#       username: "testuser"
+#       password: "testpassword"
+#       regionname: "DE"
 ## Passphrase for backups encryption
 # odoo_backup_pass: notSecureEnoughPasswordToBeModified
