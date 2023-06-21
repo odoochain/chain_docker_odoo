@@ -194,7 +194,7 @@
         name: "backup {{ item.key }}{{ account_index + 1 }}"
         minute: "{{ '%M' | strftime((('1970-01-01 ' + backup_time_start) | to_datetime).timestamp() + ( swift_accounts | length - (account_index + 1)) * ((backup_time_slot_duration | community.general.to_seconds - swift_accounts | length * backup_time_max_duration | community.general.to_seconds) / (swift_accounts | length - 1) + backup_time_max_duration | community.general.to_seconds) | int) }}"
         hour: "{{ '%H' | strftime((('1970-01-01 ' + backup_time_start) | to_datetime).timestamp() + ( swift_accounts | length - (account_index + 1)) * ((backup_time_slot_duration | community.general.to_seconds - swift_accounts | length * backup_time_max_duration | community.general.to_seconds) / (swift_accounts | length - 1) + backup_time_max_duration | community.general.to_seconds) | int) }}"
-        job: "/usr/local/bin/docker-compose -f /home/docker/backups/backup-{{ item.key }}{{ account_index + 1 }}.yaml run --rm backup_odoo"
+        job: "/usr/bin/docker-compose -f /home/docker/backups/backup-{{ item.key }}{{ account_index + 1 }}.yaml run --rm backup_odoo"
       loop: "{{ swift_accounts }}"
       loop_control:
         label: "account {{ account_index + 1 }}"
