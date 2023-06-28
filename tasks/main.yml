@@ -17,7 +17,7 @@
   include_tasks:
     file: instance.yml
     apply:
-      tags: odoo_backup
+      tags: backup_odoo
   with_dict: "{{ odoo_instances }}"
   loop_control:
     label: "{{ item.key }}"
@@ -26,7 +26,10 @@
   when: not (item.value.prod_instance | default(false) == item.key) and (odoo_instance is undefined or item.key == odoo_instance)
 
 - name: prod instance setup
-  include_tasks: instance.yml
+  include_tasks:
+    file: instance.yml
+    apply:
+      tags: backup_odoo
   with_dict: "{{ odoo_instances }}"
   loop_control:
     label: "{{ item.key }}"
