@@ -2,18 +2,16 @@ docker_odoo
 ===========
 
 This role deploys Odoo (community edition) in a Docker, together with PostgreSQL, postfix proxy, metabase, etc. as needed
-By default, this role would deploy :
-* 1 production instance
-* 1 test instance
-with the following workflow :
+By default, this role would deploy as many instances as defined in odoo_instances variable.
+Usually we deploy for each of our customers 2 instance (prod and test) with the following workflow :
 1. Build Odoo image on test instance
 2. Test image on test instance
 3. Once confirmed OK, copy test image in prod image and restart prod instance on this new image
 4. Use prod image on production instance
 
-This role is originally derivated from the work done by [Tecnativa/Doodba](https://github.com/Tecnativa/doodba) for creating a generic Odoo Docker, although it has been reworked lately in order to reduce drastically the size of the Docker image used, since using Tecnativa Doodba, we were reaching 1.5 GB for the image, when the new images are around 800 MB.
+This role is originally derivated from the work done by [Tecnativa/Doodba](https://github.com/Tecnativa/doodba) for creating a generic Odoo Docker, although it has been reworked lately in order to reduce drastically the size of the Docker image used, since using Tecnativa Doodba, we were reaching 1.5 GB for the image, when the new images are around 1 GB.
 
-This role is taking advantage of [Le Filament Odoo Docker](https://hub.docker.com/repository/docker/lefilament/odoo) which is also described on corresponding [Le Filament GitHub page](https://github.com/lefilament/odoo_docker) and adds on top additional OCA modules and private modules defined with variables *odoo_custom_modules_oca* and *odoo_custom_modules* (see below)
+This role is taking advantage of [Le Filament Odoo Docker image](https://hub.docker.com/repository/docker/lefilament/odoo) which is also described on (and built from) [Le Filament GitLab page](https://sources.le-filament.com/lefilament/odoo_docker) and adds on top additional OCA modules and private modules that are used by most of our customers.
 
 
 Requirements
@@ -131,18 +129,15 @@ odoo_instances:
   * whitelisted_urls : this list may contain URLs that would be accessible from prod and nonprod Odoo instances
   * extra_urls defined in either odoo_prod or any odoo_nonprod_instances may contain URLs that would be accessible only from the instance in which it is defined (as an example, with this variable you would be able to allow access to some API only for prod instance)
 
-* Mail server : by default, nonprod instances are not allowed to communicate towards mail server and are connected to a [mailhog]() instance allowing to check what e-mails would have been sent out. This would allow again to have only prod instance being able to send e-mails to partners. The following variables can be used to authorize access to mail server (SMTP/IMAP) and to configure local postfix relay (this way you would not need to configure e-mail server credentials in Odoo database) :
+* Mail server : by default, nonprod instances are not allowed to communicate towards mail server and are connected to a [mailhog](https://github.com/mailhog/MailHog) instance allowing to check what e-mails would have been sent out. This would allow again to have only prod instance being able to send e-mails to partners. The following variables can be used to authorize access to mail server (SMTP/IMAP) and to configure local postfix relay (this way you would not need to configure e-mail server credentials in Odoo database) :
   * mailname : if defined (together with the mailserver and smtp** variables) a postfix local relay will be deployed and used by prod instance only. If not defined, a mailhog instance would be deployed on prod also.
   * imap_mailserver : if defined a whitelist is created to allow connecting to IMAP server on port 993 (see also the previous section related to Internet Access for explaining why these whitelists might be required)
-
-* Bank : some variables may be defined to deploy [woob](https://woob.tech/) on the server together with configuration of bank accounts. This would allow to web scrap your bank website to collect daily bank statements that can then be automatically imported in Odoo prod instance.
-
 
 * Backups (for backups to be deployed, host needs to be in maintenance_contract group) : the backups make use of [Tecnativa Duplicity Docker](https://github.com/Tecnativa/docker-duplicity)
   * swift_accounts dict parameters for object storage instances where backups should be pushed daily
   * odoo_backup_pass : Passphrase for encryption of backups
 
-* Metabase : This role allows for deployment of Metabase, a Business Intelligence (BI) Open Source tool that would be connected with readonly used on prod database in order to extract metrics and indicators from Odoo database and display those in dashboards.
+* Metabase : This role allows for deployment of [Metabase](https://www.metabase.com/), a Business Intelligence (BI) Open Source tool that would be connected with readonly used on prod database in order to extract metrics and indicators from Odoo database and display those in dashboards.
 
 
 Dependencies
@@ -159,13 +154,6 @@ Example Playbook
 
 Given the number of variables (see defaults/main.yml), it would be preferable to create a host_vars file listing all the variables needed for you Odoo server, rather than giving your variables through the playbook directly.
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: docker_odoo }
-      vars:
-         - { odoo_version: 14 }
 
 License
 -------

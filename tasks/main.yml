@@ -3,38 +3,38 @@
 # Whitelists section
 # --------------------------------------------------
 
-- name: copy docker compose for whitelists
-  template:
-    src: whitelists.yaml.j2
-    dest: "/home/docker/whitelists.yaml"
-    owner: root
-    group: root
-    mode: '0400'
-  notify: start odoo whitelists
+- name: Copy docker compose for whitelists
+  ansible.builtin.template:
+      src: whitelists.yaml.j2
+      dest: "/home/docker/whitelists.yaml"
+      owner: root
+      group: root
+      mode: '0400'
+  notify: Start odoo whitelists
   when: restrict_internet_access and whitelisted_urls | default([])
 
-- name: non-prod instance setup
-  include_tasks:
-    file: instance.yml
-    apply:
-      tags: backup_odoo
+- name: NON-PROD instance setup
+  ansible.builtin.include_tasks:
+      file: instance.yml
+      apply:
+          tags: backup_odoo
   with_dict: "{{ odoo_instances }}"
   loop_control:
-    label: "{{ item.key }}"
+      label: "{{ item.key }}"
   vars:
-    instance_odoo_setup: "{{ odoo_setup_conf[item.value.odoo_setup_version | default(odoo_setup_version)] }}"
+      instance_odoo_setup: "{{ odoo_setup_conf[item.value.odoo_setup_version | default(odoo_setup_version)] }}"
   when: not (item.value.prod_instance | default(false) == item.key) and (odoo_instance is undefined or item.key == odoo_instance)
 
-- name: prod instance setup
-  include_tasks:
-    file: instance.yml
-    apply:
-      tags: backup_odoo
+- name: PROD instance setup
+  ansible.builtin.include_tasks:
+      file: instance.yml
+      apply:
+          tags: backup_odoo
   with_dict: "{{ odoo_instances }}"
   loop_control:
-    label: "{{ item.key }}"
+      label: "{{ item.key }}"
   vars:
-    instance_odoo_setup: "{{ odoo_setup_conf[item.value.odoo_setup_version | default(odoo_setup_version)] }}"
+      instance_odoo_setup: "{{ odoo_setup_conf[item.value.odoo_setup_version | default(odoo_setup_version)] }}"
   when: item.value.prod_instance | default(false) == item.key and (odoo_instance is undefined or item.key == odoo_instance)
 
 # --------------------------------------------------
@@ -42,28 +42,28 @@
 # --------------------------------------------------
 - name: Remote Imports
   block:
-    - name: Push private keys for any external tool connection
-      when: private_keys is defined
-      copy:
-        content: "{{ private_keys }}"
-        dest: "/root/.ssh/id_rsa"
-        owner: root
-        group: root
-        mode: '0400'
+      - name: Push private keys for any external tool connection
+        when: private_keys is defined
+        ansible.builtin.copy:
+            content: "{{ private_keys }}"
+            dest: "/root/.ssh/id_rsa"
+            owner: root
+            group: root
+            mode: '0400'
 
-    - name: PROD Copy script file for collecting remote files
-      when: private_pull is defined
-      template:
-        src: pull_remote_files.sh.j2
-        dest: /root/pull_remote_files.sh
-        owner: root
-        group: root
-        mode: '0700'
+      - name: PROD Copy script file for collecting remote files
+        when: private_pull is defined
+        ansible.builtin.template:
+            src: pull_remote_files.sh.j2
+            dest: /root/pull_remote_files.sh
+            owner: root
+            group: root
+            mode: '0700'
 
-    - name: PROD add cron job to pull files from remote server
-      when: private_pull is defined
-      cron:
-        name: pull remote server files
-        minute: "30"
-        hour: "23"
-        job: /root/pull_remote_files.sh
+      - name: PROD add cron job to pull files from remote server
+        when: private_pull is defined
+        ansible.builtin.cron:
+            name: pull remote server files
+            minute: "30"
+            hour: "23"
+            job: /root/pull_remote_files.sh

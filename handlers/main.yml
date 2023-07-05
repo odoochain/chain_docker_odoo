@@ -1,59 +1,59 @@
 ---
-- name: start odoo whitelists
-  docker_compose:
-    project_src: /home/docker
-    files: whitelists.yaml
-    project_name: whitelists
+- name: Start odoo whitelists
+  community.docker.docker_compose:
+      project_src: /home/docker
+      files: whitelists.yaml
+      project_name: whitelists
 
-- name: pull odoo ML image
-  docker_image:
-    name: lefilament/odoo:{{ instance_odoo_version }}_ml
-    source: pull
-    force_source: true
+- name: Pull odoo ML image
+  community.docker.docker_image:
+      name: lefilament/odoo:{{ instance_odoo_version }}_ml
+      source: pull
+      force_source: true
   when: not ansible_check_mode and instance.value.odoo_multilingual | default(false)
 
-- name: pull odoo Python3.6 image
-  docker_image:
-    name: lefilament/odoo:{{ instance_odoo_version }}_py3.6
-    source: pull
-    force_source: true
+- name: Pull odoo Python3.6 image
+  community.docker.docker_image:
+      name: lefilament/odoo:{{ instance_odoo_version }}_py3.6
+      source: pull
+      force_source: true
   when: not ansible_check_mode and instance.value.odoo_python36 | default(false)
 
-- name: pull odoo image
-  docker_image:
-    name: lefilament/odoo:{{ instance_odoo_version }}
-    source: pull
-    force_source: true
+- name: Pull odoo image
+  community.docker.docker_image:
+      name: lefilament/odoo:{{ instance_odoo_version }}
+      source: pull
+      force_source: true
   when: not ansible_check_mode and not (instance.value.odoo_multilingual | default(false) or instance.value.odoo_python36 | default(false))
 
-- name: build odoo image
-  docker_compose:
-    project_src: /home/docker/{{ instance.key }}/
-    build: true
-    nocache: true
-    recreate: always
-    restarted: true
-    remove_orphans: true
+- name: Build odoo image
+  community.docker.docker_compose:
+      project_src: /home/docker/{{ instance.key }}/
+      build: true
+      nocache: true
+      recreate: always
+      restarted: true
+      remove_orphans: true
   async: 600
   poll: 10
   when: not ansible_check_mode
 
-- name: start odoo container
-  docker_compose:
-    project_src: /home/docker/{{ instance.key }}/
-    remove_orphans: true
+- name: Start odoo container
+  community.docker.docker_compose:
+      project_src: /home/docker/{{ instance.key }}/
+      remove_orphans: true
   when: not ansible_check_mode
 
-- name: remove intermediate image
-  docker_prune:
-    builder_cache: true
-    images: true
-    images_filters:
-      label: stage=builder
+- name: Remove intermediate image
+  community.docker.docker_prune:
+      builder_cache: true
+      images: true
+      images_filters:
+          label: stage=builder
   when: not ansible_check_mode and inventory_hostname not in groups['maintenance_contract']
 
-- name: remove ssh private keys
-  file:
-    path: "/home/docker/{{ instance.key }}/odoo/id_ed25519.sources"
-    state: absent
+- name: Remove ssh private keys
+  ansible.builtin.file:
+      path: "/home/docker/{{ instance.key }}/odoo/id_ed25519.sources"
+      state: absent
   when: not ansible_check_mode and inventory_hostname not in groups['maintenance_contract']
