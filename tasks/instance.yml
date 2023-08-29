@@ -9,7 +9,6 @@
 
 - name: Container building requirements
   when: item.value.image_instance | default(false) == item.key
-  tags: ['never', 'build_odoo']
   block:
       - name: Create Odoo private docker structure on server in /home/docker/{{ item.key }}
         ansible.builtin.file:
