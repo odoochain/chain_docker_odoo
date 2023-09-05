@@ -17,7 +17,8 @@ This role is taking advantage of [Le Filament Odoo Docker image](https://hub.doc
 Requirements
 ------------
 
-None
+This role requires Ansible collection community.docker
+Also, this role requires passlib (either python package or python3-passlib apt package) for proper encryption of passwords and specific filter as per https://sources.le-filament.com/-/snippets/3.
 
 Role Variables
 --------------
