@@ -54,7 +54,7 @@ services:
 {% endif %}
             traefik.enable: "true"
 {% if ansible_processor_vcpus > 2 or item.value.force_odoo_workers is defined %}
-            traefik.http.routers.{{ item.key }}-{{ instance_odoo_setup.websocket_uri }}.rule: "Host(`{{ item.value.url }}`{% if item.value.url2 is defined %}, `{{ item.value.url2 }}`{% endif %}) && PathPrefix(`/{{ instance_odoo_setup.websocket_uri }}/`)"
+            traefik.http.routers.{{ item.key }}-{{ instance_odoo_setup.websocket_uri }}.rule: "Host(`{{ item.value.url }}`{% if item.value.url2 is defined %}, `{{ item.value.url2 }}`{% endif %}) && PathPrefix(`/{{ instance_odoo_setup.websocket_uri }}{{ instance_odoo_setup.websocket_uri_trailing }}`)"
             traefik.http.routers.{{ item.key }}-{{ instance_odoo_setup.websocket_uri }}.service: "{{ item.key }}-{{ instance_odoo_setup.websocket_uri }}"
             traefik.http.services.{{ item.key }}-{{ instance_odoo_setup.websocket_uri }}.loadbalancer.server.port: "8072"
 {% endif %}
