@@ -44,6 +44,8 @@ odoo_instances:
         image_instance: odootest
         # Name of an instance from which take backups. Itself if backups are made for this instance (like here).
         backup_instance: odoo
+        # Odoo version to be deployed
+        odoo_setup_version: 16
         ## URL (only sub.domain without https:// in front)
         url: "{{ SERVER_odoo_url }}"
         master_pass: "{{ SERVER_odoo_master_pass }}"
@@ -63,6 +65,8 @@ odoo_instances:
         image_instance: odootest
         # This instance need to restore backups from production instance.
         backup_instance: odoo
+        # Odoo version to be deployed
+        odoo_setup_version: 16
         ## URL (only sub.domain without https:// in front)
         url: "{{ SERVER_odoo_test_url }}"
         ## Database Name
