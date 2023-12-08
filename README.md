@@ -1,4 +1,4 @@
-docker_odoo
+chain_docker_odoo
 ===========
 
 This role deploys Odoo (community edition) in a Docker, together with PostgreSQL, postfix proxy, metabase, etc. as needed
@@ -45,7 +45,7 @@ odoo_instances:
         # Name of an instance from which take backups. Itself if backups are made for this instance (like here).
         backup_instance: odoo
         # Odoo version to be deployed
-        odoo_setup_version: 16
+        odoo_setup_version: 16.0-chain
         ## URL (only sub.domain without https:// in front)
         url: "{{ SERVER_odoo_url }}"
         master_pass: "{{ SERVER_odoo_master_pass }}"
@@ -66,7 +66,7 @@ odoo_instances:
         # This instance need to restore backups from production instance.
         backup_instance: odoo
         # Odoo version to be deployed
-        odoo_setup_version: 16
+        odoo_setup_version: 16.0-chain
         ## URL (only sub.domain without https:// in front)
         url: "{{ SERVER_odoo_test_url }}"
         ## Database Name
@@ -78,7 +78,7 @@ odoo_instances:
         #       branch: "14.0"
         ## OCA modules - these should be limited to the ones not already defined
         ## in groups_vars/docker_odoo in default_odoo_custom_modules_oca (since these
-        ## are already part of lefilament/odoo:10.0 and 12.0 dockers)
+        ## are already part of odoochain/odoo:10.0 and 12.0 dockers)
         # custom_modules_oca:
         #     - repo: server-tools
         #       modules:
@@ -86,11 +86,11 @@ odoo_instances:
         ## Other Odoo modules where git repo is the module
         # other_repos:
         #     - repo: filament
-        #       url: git@github.com:lefilament/link_sale_project_tasks.git
+        #       url: git@github.com:odoochain/chain_link_sale_project_tasks.git
         ## Other Odoo modules where git repo contains various modules
         # other_modules:
         #     - repo: filament
-        #       url: https://github.com/lefilament/bank-statement-import.git
+        #       url: https://github.com/odoochain/oca-bank-statement-import.git
         #       branch: 12.0-mig-account_bank_statement_import_ofx
         #       modules:
         #           - account_bank_statement_import_ofx
@@ -169,3 +169,5 @@ Author Information
 ------------------
 
 Le Filament (https://le-filament.com)
+
+odoochain (https://www.odoochain.com)
